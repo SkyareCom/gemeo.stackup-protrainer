@@ -247,6 +247,10 @@ const POSTFLOP_ACTION_ORDER = ["SB","BB","UTG","UTG1","MP","MP1","LJ","HJ","CO",
 const HERO_SEAT_COLOR = "#3B82F6";
 const VILLAIN_SEAT_COLOR = "#EC4899";
 const INACTIVE_SEAT_COLOR = "#374151";
+// Card único de log de ação (ver actionLogFixedRows/actionLogActiveRow mais abaixo): altura de
+// cada linha e quantas ficam visíveis de uma vez antes de precisar rolar.
+const ACTION_LOG_ROW_HEIGHT = 34;
+const ACTION_LOG_VISIBLE_ROWS = 6;
 const ACTION_SEAT_COLORS = {
   RAISE: "#22C55E",
   "ISO RAISE": "#22C55E",
@@ -4056,6 +4060,66 @@ export default function App() {
     };
   });
 
+  // Card único de log de ação (substitui os cards fixos por posição/rodízio): em vez de um
+  // slot fixo por posição que a "vez" visita várias vezes ao longo da mesa, cada evento de
+  // actionSequence vira uma linha cronológica nova, na ordem real em que aconteceu. Um FOLD
+  // nunca "gruda" numa linha — aparece por um instante (dispara o som e a animação de saída
+  // já existentes), some da esquerda pra direita e nunca entra no histórico rolável; só ações
+  // que travam a rodada (limp/call/check/raise/bet/all-in) ficam registradas de vez. Isso
+  // reaproveita o mesmo actionStep/actionSequence/sequenceReady que já dirige o card antigo —
+  // não há novo motor de tempo, só uma leitura diferente do mesmo estado.
+  //
+  // Cada linha usa event.betBB/event.betChips (o total daquele evento específico, não o
+  // "último evento da posição") pra calcular o stack no momento — necessário porque, em
+  // cenários FACING_3BET, a mesma posição pode aparecer duas vezes na sequência (limpa e,
+  // numa segunda volta, paga a 3-bet); usar o estado "mais recente" do assento faria a
+  // primeira linha (já fixada) mudar de valor retroativamente quando a segunda acontecesse.
+  //
+  // Sem dado de streets anteriores no banco de spots (buildActionTimeline só reconstrói a
+  // street atual) — o log começa vazio a cada nova street, não porque foi resetado de
+  // propósito, mas porque é tudo que existe pra mostrar.
+  const actionLogFixedRows = [];
+  let actionLogActiveRow = null;
+  if (!torneioMode) {
+    for (let idx = 0; idx < actionSequence.length; idx++) {
+      const isCompleted = sequenceReady || idx < actionStep;
+      const isActive = !sequenceReady && idx === actionStep;
+      if (!isCompleted && !isActive) break;
+      const event = actionSequence[idx];
+      const seat = animatedSeats.find((s) => s.pos === event.pos);
+      if (!seat) continue;
+      const committedChips = Number(event.betChips || 0);
+      const committedBB = Number(event.betBB || 0);
+      const paidAnteBB = spot.street === "PRE-FLOP" && event.pos === "BB" ? Number((spot.ante || spot.bb) / spot.bb) : 0;
+      const paidAnteChips = paidAnteBB * spot.bb;
+      const row = {
+        key: `${idx}-${event.pos}-${event.action}`,
+        pos: event.pos,
+        action: event.action,
+        stackChips: Math.max(0, Number(seat.stackChips || 0) - committedChips - paidAnteChips),
+        stackBB: Math.max(0, Number(seat.stackBB || 0) - committedBB - paidAnteBB),
+      };
+      if (isActive) {
+        actionLogActiveRow = row;
+      } else if (event.action !== "FOLD") {
+        actionLogFixedRows.push(row);
+      }
+    }
+  }
+  const actionLogVisibleRows = actionLogActiveRow ? [...actionLogFixedRows, actionLogActiveRow] : actionLogFixedRows;
+  const actionLogRowCount = actionLogVisibleRows.length;
+  const actionLogLastKey = actionLogActiveRow?.key ?? actionLogFixedRows[actionLogFixedRows.length - 1]?.key ?? null;
+
+  // Acompanha o final do log automaticamente conforme novas linhas chegam (igual a um chat) —
+  // o usuário ainda pode rolar pra cima manualmente pra rever o início da street a qualquer
+  // momento; a rolagem automática só reancora quando uma linha nova de fato aparece/muda.
+  useEffect(() => {
+    if (torneioMode) return;
+    const el = playersSectionRef.current;
+    if (!el) return;
+    el.scrollTop = el.scrollHeight;
+  }, [torneioMode, actionLogRowCount, actionLogLastKey]);
+
   // Reconstrói o pote em cada frame da animação. `spot.pot` representa o pote completo no
   // momento da decisão; retiramos os compromissos finais da street e recolocamos apenas os
   // valores que já apareceram na linha do tempo. Isso também evita dupla contagem quando um
@@ -4193,11 +4257,22 @@ export default function App() {
         @keyframes nlhStartPulse { 0%,100% { opacity: 1; box-shadow: 0 0 12px rgba(239,68,68,.75), 0 0 24px rgba(239,68,68,.35); text-shadow: 0 0 8px rgba(255,255,255,.85); } 50% { opacity: .48; box-shadow: 0 0 24px rgba(239,68,68,1), 0 0 40px rgba(239,68,68,.65); text-shadow: 0 0 18px #fff; } }
         @keyframes nlhActionFlash { 0%,40%,80% { opacity: .25; transform: scale(.99); } 20%,60%,100% { opacity: 1; transform: scale(1.01); } }
         @keyframes nlhHeroDecisionPulse { 0%,100% { box-shadow: 0 0 10px currentColor, 0 0 20px currentColor; } 50% { box-shadow: 0 0 22px currentColor, 0 0 40px currentColor, inset 0 0 10px currentColor; } }
+        @keyframes nlhLogRowIn { 0% { opacity: 0; transform: translateY(-4px); } 100% { opacity: 1; transform: translateY(0); } }
+        @keyframes nlhLogCellFoldOut { 0% { opacity: 1; transform: translateX(0); } 100% { opacity: 0; transform: translateX(-6px); } }
         .nlh-blink-border { animation: nlhBlinkBorder 1s infinite; }
         .nlh-blink-text { animation: nlhBlinkText 1s infinite; }
         .nlh-start-pulse { animation: nlhStartPulse .85s ease-in-out infinite; }
         .nlh-action-flash { animation: nlhActionFlash .62s ease-in-out; }
         .nlh-hero-decision-pulse { animation: nlhHeroDecisionPulse .85s ease-in-out infinite; }
+        .nlh-log-row { animation: nlhLogRowIn .18s ease-out; }
+        .nlh-log-row-fold .nlh-log-cell:nth-child(1) { animation: nlhLogCellFoldOut .2s ease-in .05s both; }
+        .nlh-log-row-fold .nlh-log-cell:nth-child(2) { animation: nlhLogCellFoldOut .2s ease-in .18s both; }
+        .nlh-log-row-fold .nlh-log-cell:nth-child(3) { animation: nlhLogCellFoldOut .2s ease-in .31s both; }
+        .nlh-log-row-fold .nlh-log-cell:nth-child(4) { animation: nlhLogCellFoldOut .2s ease-in .44s both; }
+        .nlh-action-log-scroll { scrollbar-width: thin; scrollbar-color: #475569 rgba(15,23,42,0.4); }
+        .nlh-action-log-scroll::-webkit-scrollbar { width: 6px; }
+        .nlh-action-log-scroll::-webkit-scrollbar-track { background: rgba(15,23,42,0.4); border-radius: 3px; }
+        .nlh-action-log-scroll::-webkit-scrollbar-thumb { background: #475569; border-radius: 3px; }
       `}</style>
       <div style={{ maxWidth: 600, margin: "0 auto", display: "flex", flexDirection: "column", gap: 8, fontSize: 15 }}>
 
@@ -4722,51 +4797,71 @@ export default function App() {
           </div>
         )}
 
-        <div ref={playersSectionRef} className="grid grid-cols-2 gap-2" style={{ gridTemplateRows: "repeat(5, minmax(58px, auto))" }}>
-          {(torneioMode ? (torneioClockwiseSeats || []) : animatedSeats).map((p, i) => {
-            const shownAction = !actionFlowEnabled ? "---" : p.displayAction || (p.isHero ? "AGUARDANDO" : "---");
-            const committedChips = Number(p.displayBetChips || 0);
-            const committedBB = Number(p.displayBetBB || 0);
-            // No modelo Big Blind Ante, somente o BB paga mais 1 BB de ante. O valor não aparece
-            // como aposta da street, mas precisa sair do stack desde o início da mão. No Modo
-            // Torneio o ante já sai do BTN dentro do próprio motor (BB ante real) — o stack
-            // exibido (p.stackBB) já reflete isso, não precisa subtrair de novo aqui.
-            const paidAnteBB = !torneioMode && spot.street === "PRE-FLOP" && p.pos === "BB" ? Number((spot.ante || spot.bb) / spot.bb) : 0;
-            const paidAnteChips = paidAnteBB * (torneioMode ? 1 : spot.bb);
-            const displayStackChips = Math.max(0, Number(p.stackChips || 0) - committedChips - paidAnteChips);
-            const displayStackBB = Math.max(0, Number(p.stackBB || 0) - committedBB - paidAnteBB);
-            const miniActionColor = !torneioMode && p.isHero && sequenceReady ? heroPromptColor : shownAction === "---" || shownAction === "AGUARDANDO" ? INACTIVE_SEAT_COLOR : shownAction === "FOLD" ? "#6B7280" : actionSeatColor(shownAction);
-            const cardBorderColor = positionBadgeColor(p.pos) || seatColor(p);
-            return (
-              <div key={i} className={`rounded-md ${p.isActionActive ? "nlh-action-flash" : ""} ${!torneioMode && p.isHero && sequenceReady && !decision ? "nlh-hero-decision-pulse" : ""}`} style={{
-                gridRow: p.gridRow,
-                gridColumn: p.gridColumn,
-                minHeight: 58,
-                border: `${p.isHero ? 2 : 1.5}px solid ${cardBorderColor}`,
-                color: cardBorderColor,
-                opacity: actionFlowEnabled ? p.opacity : 1,
-                // Efeito de brilho fica só pro herói (destaque de decisão, agora na cor da
-                // posição dele em vez de azul fixo — currentColor herda do color acima) e pro
-                // "flash" de quem está agindo agora — removido o brilho permanente que todo
-                // jogador envolvido na mão ganhava (antes rosa, de seatColor/isInvolved); as
-                // demais posições mantêm a cor original da borda, sem glow extra.
-                boxShadow: !torneioMode && p.isHero && sequenceReady ? "0 0 12px currentColor, 0 0 24px currentColor" : p.isActionActive ? `0 0 14px ${cardBorderColor}` : "none",
-                transition: "opacity 180ms ease, box-shadow 180ms ease",
-                padding: "5px",
-                display: "flex",
-                flexDirection: "column",
-                justifyContent: "space-between",
-                background: "#000",
-              }}>
-                <div style={{ display: "flex", gap: 8, width: "100%" }}>
-                  <div className="rounded" style={{ flex: 1, minWidth: 0, color: positionBadgeColor(p.pos) || seatColor(p), border: `1px solid ${positionBadgeColor(p.pos) || seatColor(p)}`, background: `${positionBadgeColor(p.pos) || seatColor(p)}18`, textAlign: "center", padding: "3px 4px", fontSize: 11, fontWeight: 900 }}>{p.pos}</div>
-                  <div className="rounded" style={{ flex: 1, minWidth: 0, color: miniActionColor, border: `1px solid ${miniActionColor}`, background: `${miniActionColor}18`, textAlign: "center", padding: "3px 4px", fontSize: 11, fontWeight: 900, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{shownAction}</div>
+        {torneioMode ? (
+          <div className="grid grid-cols-2 gap-2" style={{ gridTemplateRows: "repeat(5, minmax(58px, auto))" }}>
+            {(torneioClockwiseSeats || []).map((p, i) => {
+              const shownAction = p.displayAction || (p.isHero ? "AGUARDANDO" : "---");
+              const committedChips = Number(p.displayBetChips || 0);
+              const committedBB = Number(p.displayBetBB || 0);
+              // No Modo Torneio o ante já sai do BTN dentro do próprio motor (BB ante real) — o
+              // stack exibido (p.stackBB) já reflete isso, não precisa subtrair de novo aqui.
+              const displayStackChips = Math.max(0, Number(p.stackChips || 0) - committedChips);
+              const displayStackBB = Math.max(0, Number(p.stackBB || 0) - committedBB);
+              const miniActionColor = shownAction === "---" || shownAction === "AGUARDANDO" ? INACTIVE_SEAT_COLOR : shownAction === "FOLD" ? "#6B7280" : actionSeatColor(shownAction);
+              const cardBorderColor = positionBadgeColor(p.pos) || seatColor(p);
+              return (
+                <div key={i} className={`rounded-md ${p.isActionActive ? "nlh-action-flash" : ""}`} style={{
+                  gridRow: p.gridRow,
+                  gridColumn: p.gridColumn,
+                  minHeight: 58,
+                  border: `${p.isHero ? 2 : 1.5}px solid ${cardBorderColor}`,
+                  color: cardBorderColor,
+                  opacity: p.opacity,
+                  boxShadow: p.isActionActive ? `0 0 14px ${cardBorderColor}` : "none",
+                  transition: "opacity 180ms ease, box-shadow 180ms ease",
+                  padding: "5px",
+                  display: "flex",
+                  flexDirection: "column",
+                  justifyContent: "space-between",
+                  background: "#000",
+                }}>
+                  <div style={{ display: "flex", gap: 8, width: "100%" }}>
+                    <div className="rounded" style={{ flex: 1, minWidth: 0, color: positionBadgeColor(p.pos) || seatColor(p), border: `1px solid ${positionBadgeColor(p.pos) || seatColor(p)}`, background: `${positionBadgeColor(p.pos) || seatColor(p)}18`, textAlign: "center", padding: "3px 4px", fontSize: 11, fontWeight: 900 }}>{p.pos}</div>
+                    <div className="rounded" style={{ flex: 1, minWidth: 0, color: miniActionColor, border: `1px solid ${miniActionColor}`, background: `${miniActionColor}18`, textAlign: "center", padding: "3px 4px", fontSize: 11, fontWeight: 900, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{shownAction}</div>
+                  </div>
+                  <div style={{ color: "#D1D5DB", fontSize: 10, textAlign: "center", whiteSpace: "nowrap" }}><b>S {fmtChips(displayStackChips)} • {displayStackBB.toFixed(1)} BB</b></div>
                 </div>
-                <div style={{ color: "#D1D5DB", fontSize: 10, textAlign: "center", whiteSpace: "nowrap" }}><b>{actionFlowEnabled ? <>S {fmtChips(displayStackChips)} • {displayStackBB.toFixed(1)} BB</> : <>S 0 • 0.0 BB</>}</b></div>
-              </div>
-            );
-          })}
-        </div>
+              );
+            })}
+          </div>
+        ) : (
+          <div className="rounded-md" style={{ border: "1.5px solid #475569", background: "rgba(15,23,42,0.82)", padding: 7 }}>
+            <div style={{ color: "#93C5FD", fontSize: 11, fontWeight: 900, textAlign: "center", marginBottom: 6, letterSpacing: "0.08em" }}>JOGADORES COM AÇÃO</div>
+            <div ref={playersSectionRef} className="nlh-action-log-scroll" style={{ height: ACTION_LOG_ROW_HEIGHT * ACTION_LOG_VISIBLE_ROWS, overflowY: "auto", display: "flex", flexDirection: "column", gap: 2 }}>
+              {actionLogVisibleRows.length === 0 && (
+                <div style={{ color: "#6B7280", fontSize: 10, textAlign: "center", padding: "10px 0" }}>—</div>
+              )}
+              {actionLogVisibleRows.map((row, rowIdx) => {
+                const isActiveRow = !!actionLogActiveRow && rowIdx === actionLogVisibleRows.length - 1 && row.key === actionLogActiveRow.key;
+                const isFoldingRow = isActiveRow && row.action === "FOLD";
+                const posColor = positionBadgeColor(row.pos) || "#9CA3AF";
+                const actColor = row.action === "FOLD" ? "#6B7280" : actionSeatColor(row.action);
+                return (
+                  <div
+                    key={row.key}
+                    className={`nlh-log-row ${isFoldingRow ? "nlh-log-row-fold" : ""} ${isActiveRow && !isFoldingRow ? "nlh-action-flash" : ""}`}
+                    style={{ flex: `0 0 ${ACTION_LOG_ROW_HEIGHT}px`, display: "grid", gridTemplateColumns: "0.85fr 0.6fr 1fr 1.15fr", gap: 6, alignItems: "center", padding: "0 2px" }}
+                  >
+                    <div className="nlh-log-cell rounded" style={{ color: "#4ADE80", border: "1px solid #4ADE80", background: "rgba(74,222,128,0.1)", textAlign: "center", padding: "2px 3px", fontSize: 10, fontWeight: 900, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{STREET_LABEL_PT[spot.street] || spot.street}</div>
+                    <div className="nlh-log-cell rounded" style={{ color: posColor, border: `1px solid ${posColor}`, background: `${posColor}18`, textAlign: "center", padding: "2px 3px", fontSize: 11, fontWeight: 900 }}>{row.pos}</div>
+                    <div className="nlh-log-cell rounded" style={{ color: actColor, border: `1px solid ${actColor}`, background: `${actColor}18`, textAlign: "center", padding: "2px 3px", fontSize: 11, fontWeight: 900, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{row.action}</div>
+                    <div className="nlh-log-cell" style={{ color: "#D1D5DB", fontSize: 10, textAlign: "center", whiteSpace: "nowrap" }}><b>S {fmtChips(row.stackChips)} • {row.stackBB.toFixed(1)} BB</b></div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
 
 
         <div className="grid grid-cols-3 gap-2">
