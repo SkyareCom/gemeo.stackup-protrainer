@@ -646,7 +646,15 @@ function rangeMorphologyPercentile(handType, state) {
   const aggressiveNode = ["FACING_3BET", "SQUEEZE", "LIMP_RAISE"].includes(state.scenario) || state.preflopLevel >= 3;
   const shoveNode = ["OPEN_SHOVE", "FACING_SHOVE", "RESHOVE", "MULTI_SHOVE"].includes(state.scenario) || state.effectiveStackBB <= 15;
 
-  if (hand.pair) adjusted += shoveNode ? -5 : aggressiveNode && hand.a <= 6 ? 4 : -2;
+  // chenScore() usa "dobra a pontuação, mínimo 5" pra pares — isso força 22/33/44 (que dobrariam
+  // pra 2/3/4) a ficarem empatados em 5.0 com 55 (que já dobra pra exatos 5 por conta própria),
+  // colapsando os quatro no mesmo percentil bruto (~43-46, pior que várias mãos ofsuit fracas
+  // tipo 98o ou K6s). O -2 padrão não compensa esse buraco nem de longe: mesmo com ele, 22-55
+  // continuavam foldando em CO (limiar 35) — bug real encontrado a partir de um spot reportado
+  // (44 no CO foldando um RFI). -12 pros pares de 5 pra baixo corrige isso mantendo a ordem
+  // (22 < 33 < 44 < 55 em força, preservada porque é um ajuste plano) sem deixar 55 ultrapassar
+  // 66, que já abre de posições mais cedo por conta própria.
+  if (hand.pair) adjusted += shoveNode ? -5 : aggressiveNode ? (hand.a <= 6 ? 4 : -2) : hand.a <= 5 ? -12 : -2;
   if (hand.suited && ace && hand.b <= 5) adjusted += aggressiveNode ? -8 : -3;
   if (hand.suited && gap <= 2 && hand.a <= 11) adjusted += multiway ? 3 : -2;
   if (!hand.suited && broadwayCount === 2) adjusted += multiway ? -3 : aggressiveNode ? 3 : 0;
@@ -669,16 +677,19 @@ function preflopRangeDecision(state, percentile, adj) {
     };
     const [base, inside, outside] = thresholds[node] || thresholds.HU_RFI;
     const threshold = Math.min(95, Math.max(3, base * stackPressure * adj.softFactor * (2 - adj.icmFactor) + adj.mixAdj));
-    return { action: percentile <= threshold ? inside : outside, mainThreshold: threshold, threebetThreshold: ["HU_3BET","HU_4BET"].includes(node) ? threshold : null };
+    // callLegal deriva das próprias duas opções da tabela (inside/outside) — nunca hardcoded por
+    // nó, pra não desalinhar se a tabela mudar. Ex.: HU_RFI é RAISE/FOLD (sem CALL), HU_LIMP é
+    // CALL/FOLD (com CALL).
+    return { action: percentile <= threshold ? inside : outside, mainThreshold: threshold, threebetThreshold: ["HU_3BET","HU_4BET"].includes(node) ? threshold : null, callLegal: inside === "CALL" || outside === "CALL" };
   }
   if (state.strategicNode === "BB_VS_LIMPERS" || state.strategicNode === "HU_BB_VS_LIMP") {
     const threshold = Math.min(55, Math.max(10, 32 * adj.softFactor * (2 - adj.icmFactor) + adj.mixAdj));
-    return { action: percentile <= threshold ? "RAISE" : "CHECK", mainThreshold: threshold, threebetThreshold: threshold };
+    return { action: percentile <= threshold ? "RAISE" : "CHECK", mainThreshold: threshold, threebetThreshold: threshold, callLegal: false };
   }
   if (state.scenario === "OPEN_SHOVE") {
     const base = RFI_THRESHOLD[state.position] || 20;
     const threshold = Math.min(48, Math.max(8, base * 0.72 * adj.softFactor * (2 - adj.icmFactor) + adj.mixAdj));
-    return { action: percentile <= threshold ? "ALL IN" : "FOLD", mainThreshold: threshold, threebetThreshold: null };
+    return { action: percentile <= threshold ? "ALL IN" : "FOLD", mainThreshold: threshold, threebetThreshold: null, callLegal: false };
   }
   if (state.scenario === "FACING_SHOVE") {
     const base = state.position === "BB" ? 24 : state.position === "SB" ? 18 : 12;
@@ -686,41 +697,41 @@ function preflopRangeDecision(state, percentile, adj) {
       ? Math.min(12, (state.bountyState.villainBountyBB || 0) * Math.max(1, state.bountyState.availableBounties || 1) * 0.35)
       : 0;
     const threshold = Math.min(42, Math.max(4, base * adj.softFactor * (2 - adj.icmFactor) + adj.mixAdj * 0.5 + bountyBoost));
-    return { action: percentile <= threshold ? "CALL" : "FOLD", mainThreshold: threshold, threebetThreshold: null };
+    return { action: percentile <= threshold ? "CALL" : "FOLD", mainThreshold: threshold, threebetThreshold: null, callLegal: true };
   }
   if (state.scenario === "MULTI_SHOVE") {
     const base = state.position === "BB" ? 18 : state.position === "SB" ? 14 : 10;
     const opponents = Math.max(2, (state.participantCount || 3) - 1);
     const threshold = Math.min(22, Math.max(2.5, base * adj.softFactor * (2 - adj.icmFactor) - (opponents - 2) * 2.5 + adj.mixAdj * 0.35));
-    return { action: percentile <= threshold ? "CALL" : "FOLD", mainThreshold: threshold, threebetThreshold: null };
+    return { action: percentile <= threshold ? "CALL" : "FOLD", mainThreshold: threshold, threebetThreshold: null, callLegal: true };
   }
   if (state.scenario === "RESHOVE") {
     const base = state.position === "BB" || state.position === "SB" ? 17 : 12;
     const threshold = Math.min(24, Math.max(4, base * adj.softFactor * (2 - adj.icmFactor) + adj.mixAdj * 0.5));
-    return { action: percentile <= threshold ? "ALL IN" : "FOLD", mainThreshold: threshold, threebetThreshold: null };
+    return { action: percentile <= threshold ? "ALL IN" : "FOLD", mainThreshold: threshold, threebetThreshold: null, callLegal: false };
   }
   if (state.scenario === "ISOLATE_LIMPERS") {
     const base = (RFI_THRESHOLD[state.position] || 20) * 0.82;
     const threshold = Math.min(48, Math.max(6, base * adj.softFactor * (2 - adj.icmFactor) + adj.mixAdj));
-    return { action: percentile <= threshold ? "RAISE" : "FOLD", mainThreshold: threshold, threebetThreshold: threshold };
+    return { action: percentile <= threshold ? "RAISE" : "FOLD", mainThreshold: threshold, threebetThreshold: threshold, callLegal: false };
   }
   if (state.scenario === "SQUEEZE") {
     const { callTh, threebetTh } = facingRaiseBaseThresholds(state.position, state.openerPos);
     const raiseThreshold = Math.max(3, Math.min(12, threebetTh * 0.82 - (adj.icmFactor - 1) * 4));
     const callThreshold = Math.max(raiseThreshold, Math.min(32, callTh * 0.72 * adj.softFactor * (2 - adj.icmFactor)));
     const action = percentile <= raiseThreshold ? "RAISE" : percentile <= callThreshold ? "CALL" : "FOLD";
-    return { action, mainThreshold: callThreshold, threebetThreshold: raiseThreshold };
+    return { action, mainThreshold: callThreshold, threebetThreshold: raiseThreshold, callLegal: true };
   }
   if (state.scenario === "LIMP_RAISE") {
     const callThreshold = Math.max(7, 22 * adj.softFactor * (2 - adj.icmFactor) + adj.mixAdj * 0.5);
     const raiseThreshold = Math.max(2.5, 7 - (adj.icmFactor - 1) * 3);
     const action = percentile <= raiseThreshold ? "RAISE" : percentile <= callThreshold ? "CALL" : "FOLD";
-    return { action, mainThreshold: callThreshold, threebetThreshold: raiseThreshold };
+    return { action, mainThreshold: callThreshold, threebetThreshold: raiseThreshold, callLegal: true };
   }
   if (state.scenario === "RFI") {
     const base = RFI_THRESHOLD[state.position];
     const threshold = Math.min(75, Math.max(4, base * adj.softFactor * (2 - adj.icmFactor) + adj.mixAdj));
-    return { action: percentile <= threshold ? "RAISE" : "FOLD", mainThreshold: threshold, threebetThreshold: null };
+    return { action: percentile <= threshold ? "RAISE" : "FOLD", mainThreshold: threshold, threebetThreshold: null, callLegal: false };
   }
   if (state.scenario === "FACING_3BET") {
     // A largura do range de 3-bet do vilão depende principalmente da POSIÇÃO DELE. A resposta
@@ -735,7 +746,7 @@ function preflopRangeDecision(state, percentile, adj) {
     if (percentile <= fourbetThreshold) action = "RAISE"; // 4-bet
     else if (percentile <= callThreshold) action = "CALL";
     else action = "FOLD";
-    return { action, mainThreshold: callThreshold, threebetThreshold: fourbetThreshold };
+    return { action, mainThreshold: callThreshold, threebetThreshold: fourbetThreshold, callLegal: true };
   }
   const { callTh, threebetTh } = facingRaiseBaseThresholds(state.position, state.openerPos);
   const multiwayPenalty = Math.max(0, (state.participantCount || 2) - 2) * 3;
@@ -745,7 +756,7 @@ function preflopRangeDecision(state, percentile, adj) {
   if (percentile <= threebetThreshold) action = "RAISE";
   else if (percentile <= callThreshold) action = "CALL";
   else action = "FOLD";
-  return { action, mainThreshold: callThreshold, threebetThreshold };
+  return { action, mainThreshold: callThreshold, threebetThreshold, callLegal: true };
 }
 
 // ---------- Banco fixo de PRÉ-FLOP por fase ----------
@@ -1963,14 +1974,26 @@ function generateSpot(cfg) {
 // CHECK tem sua própria frequência (checkFreq) — antes essa função reaproveitava a fórmula do
 // FOLD pra CHECK também (comentário antigo "FOLD ou CHECK"), o que fazia um spot com "AÇÃO
 // SUGERIDA: CHECK" exibir a maioria da mistura como "% FOLD", uma contradição direta.
-function mixFrequencies(action, confidence) {
+// callLegal: false para cenários onde CALL nunca é uma opção real (RFI, OPEN_SHOVE,
+// ISOLATE_LIMPERS, RESHOVE, BB_VS_LIMPERS e os nós HU equivalentes sem CALL na tabela) — nesses
+// casos o resto da mistura (que antes vazava pra callFreq, produzindo por exemplo "38% CALL" num
+// spot de RFI onde ninguém pagou nada ainda) vai inteiro pro bucket agressivo (raiseFreq, que já
+// é reaproveitado como o bucket de ALL IN também — ver buildPolicyActionEVs). Default true
+// preserva o comportamento antigo pra qualquer chamador que ainda não passe o parâmetro.
+function mixFrequencies(action, confidence, callLegal = true) {
   const dom = 55 + Math.max(0, Math.min(1, confidence)) * 35; // 55-90%, sempre maioria
   const rest = 100 - dom;
-  if (action === "RAISE") return { raiseFreq: dom, callFreq: rest * 0.65, foldFreq: rest * 0.35, checkFreq: 0 };
-  if (action === "ALL IN") return { raiseFreq: dom, callFreq: rest, foldFreq: 0, checkFreq: 0 };
+  if (action === "RAISE" || action === "ALL IN") {
+    if (!callLegal) return { raiseFreq: dom, callFreq: 0, foldFreq: rest, checkFreq: 0 };
+    return action === "ALL IN"
+      ? { raiseFreq: dom, callFreq: rest, foldFreq: 0, checkFreq: 0 }
+      : { raiseFreq: dom, callFreq: rest * 0.65, foldFreq: rest * 0.35, checkFreq: 0 };
+  }
   if (action === "CALL") return { raiseFreq: rest * 0.5, callFreq: dom, foldFreq: rest * 0.5, checkFreq: 0 };
   if (action === "CHECK") return { raiseFreq: rest, callFreq: 0, foldFreq: 0, checkFreq: dom };
-  return { raiseFreq: 0, callFreq: rest, foldFreq: dom, checkFreq: 0 }; // FOLD
+  // FOLD
+  if (!callLegal) return { raiseFreq: rest, callFreq: 0, foldFreq: dom, checkFreq: 0 };
+  return { raiseFreq: 0, callFreq: rest, foldFreq: dom, checkFreq: 0 };
 }
 
 function buildPolicyActionEVs(spot, exploitAction, frequencies, bestEvBB) {
@@ -2084,7 +2107,7 @@ function computeAnalysis(spot, cfg) {
     } else {
       bankConfidence = (percentile - dominant.mainThreshold) / Math.max(1, 100 - dominant.mainThreshold);
     }
-    const { raiseFreq, callFreq, foldFreq, checkFreq } = mixFrequencies(dominant.action, bankConfidence);
+    const { raiseFreq, callFreq, foldFreq, checkFreq } = mixFrequencies(dominant.action, bankConfidence, dominant.callLegal);
     const spr = spot.heroStack / Math.max(spot.pot, 1);
     const alpha = spot.facingBet ? (spot.callChips / (spot.pot + spot.callChips)) * 100 : 0;
     const mdf = 100 - alpha;
@@ -2168,7 +2191,9 @@ function computeAnalysis(spot, cfg) {
   else if (exploitAction === "CALL") legConfidence = 1 - Math.abs(finalEquity - finalThreshold) / 15;
   else if (exploitAction === "FOLD") legConfidence = (finalThreshold - finalEquity) / 20;
   else legConfidence = (60 - finalEquity) / 30; // CHECK
-  const { raiseFreq, callFreq, foldFreq, checkFreq } = mixFrequencies(exploitAction, legConfidence);
+  // decide() só devolve CALL dentro do ramo spot.facingBet — sem aposta enfrentada (RAISE/CHECK)
+  // CALL nunca é opção real, então o resto da mistura não pode vazar pra callFreq ali.
+  const { raiseFreq, callFreq, foldFreq, checkFreq } = mixFrequencies(exploitAction, legConfidence, !!spot.facingBet);
   const evBB = ((finalEquity / 100) * pot - (1 - finalEquity / 100) * callChips) / spot.bb;
 
   // Multi-sizing: só faz sentido sugerir um tamanho de aposta quando a decisão é apostar/aumentar.
