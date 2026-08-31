@@ -538,15 +538,15 @@ function computeInvolvedPositions(spot) {
 }
 // Grupos de posição usados nos treinos específicos (defesa/ataque de BB).
 const POSITION_GROUPS = { EP: ["UTG","UTG1","MP"], MP_GROUP: ["MP1","LJ","HJ"], LP: ["CO","BTN","SB"] };
-// Cor do badge de posição na mesa — puramente visual, não confundir com POSITION_GROUPS acima
-// (que agrupa por força estratégica pros presets BB_EP/BB_MP/BB_LP). SB/BB vermelho, UTG/UTG1
-// roxo, MP/MP1 azul, HJ/LJ roxo, CO amarelo, BTN branco.
+// Cor de borda do badge de posição na mesa — puramente visual, não confundir com POSITION_GROUPS
+// acima (que agrupa por força estratégica pros presets BB_EP/BB_MP/BB_LP). SB/BB vermelho,
+// UTG/UTG1 roxo, MP/MP1 ciano, HJ/LJ amarelo, CO azul, BTN branco.
 function positionBadgeColor(pos) {
   if (["SB", "BB"].includes(pos)) return "#EF4444";
   if (["UTG", "UTG1"].includes(pos)) return "#A855F7";
-  if (["MP", "MP1"].includes(pos)) return "#3B82F6";
-  if (["HJ", "LJ"].includes(pos)) return "#A855F7";
-  if (pos === "CO") return "#FACC15";
+  if (["MP", "MP1"].includes(pos)) return "#22D3EE";
+  if (["HJ", "LJ"].includes(pos)) return "#FACC15";
+  if (pos === "CO") return "#3B82F6";
   if (pos === "BTN") return "#FFFFFF";
   return null;
 }
