@@ -3975,13 +3975,15 @@ export default function App() {
       playActionSound(actionSequence[actionStep].action);
       lastSoundedStepRef.current = actionStep;
     }
-    // Jogador que dá fold: a linha some (fade-out célula a célula) ainda dentro da janela normal
-    // de revelação, mas a linha (agora vazia) precisa continuar ocupando o card por mais 2
-    // segundos FIXOS antes de avançar para a próxima ação — tempo fixo (não escalado por
-    // actionSpeed) para dar tempo real de perceber o fold antes do log seguir adiante.
+    // Jogador que dá fold: a linha aparece completa, fica parada 1s (baseDelay) e só então anda
+    // pra fora do card inteira, deslizando da esquerda pra direita (ver .nlh-log-row-fold /
+    // nlhLogRowWalkOut no CSS). FOLD_WALK_OUT_MS soma ao delay antes de avançar o actionStep —
+    // tempo fixo, não escalado por actionSpeed — pra linha só sumir da lista quando a animação
+    // de saída já tiver terminado, sem "puxar o tapete" no meio do movimento.
     const isFoldStep = actionSequence[actionStep].action === "FOLD";
     const baseDelay = Math.round(1000 / actionSpeed);
-    const timer = window.setTimeout(() => setActionStep((step) => step + 1), isFoldStep ? baseDelay + 2000 : baseDelay);
+    const FOLD_WALK_OUT_MS = 400;
+    const timer = window.setTimeout(() => setActionStep((step) => step + 1), isFoldStep ? baseDelay + FOLD_WALK_OUT_MS : baseDelay);
     return () => window.clearTimeout(timer);
   }, [actionStep, actionSequence, actionPaused, actionSpeed, playActionSound]);
 
@@ -4300,17 +4302,17 @@ export default function App() {
         @keyframes nlhActionFlash { 0%,40%,80% { opacity: .25; transform: scale(.99); } 20%,60%,100% { opacity: 1; transform: scale(1.01); } }
         @keyframes nlhHeroDecisionPulse { 0%,100% { box-shadow: 0 0 10px currentColor, 0 0 20px currentColor; } 50% { box-shadow: 0 0 22px currentColor, 0 0 40px currentColor, inset 0 0 10px currentColor; } }
         @keyframes nlhLogRowIn { 0% { opacity: 0; transform: translateY(-4px); } 100% { opacity: 1; transform: translateY(0); } }
-        @keyframes nlhLogCellFoldOut { 0% { opacity: 1; transform: translateX(0); } 100% { opacity: 0; transform: translateX(-6px); } }
+        @keyframes nlhLogRowWalkOut { 0% { opacity: 1; transform: translateX(0); } 100% { opacity: 0; transform: translateX(130%); } }
         .nlh-blink-border { animation: nlhBlinkBorder 1s infinite; }
         .nlh-blink-text { animation: nlhBlinkText 1s infinite; }
         .nlh-start-pulse { animation: nlhStartPulse .85s ease-in-out infinite; }
         .nlh-action-flash { animation: nlhActionFlash .62s ease-in-out; }
         .nlh-hero-decision-pulse { animation: nlhHeroDecisionPulse .85s ease-in-out infinite; }
         .nlh-log-row { animation: nlhLogRowIn .18s ease-out; }
-        .nlh-log-row-fold .nlh-log-cell:nth-child(1) { animation: nlhLogCellFoldOut .2s ease-in .05s both; }
-        .nlh-log-row-fold .nlh-log-cell:nth-child(2) { animation: nlhLogCellFoldOut .2s ease-in .18s both; }
-        .nlh-log-row-fold .nlh-log-cell:nth-child(3) { animation: nlhLogCellFoldOut .2s ease-in .31s both; }
-        .nlh-log-row-fold .nlh-log-cell:nth-child(4) { animation: nlhLogCellFoldOut .2s ease-in .44s both; }
+        /* Fold: a linha aparece completa (nlhLogRowIn normal), fica 1s parada e só então "anda"
+           pra fora do card inteira de uma vez, deslizando da esquerda pra direita até sumir pela
+           borda direita (FOLD_WALK_OUT_MS no timer da sequência precisa bater com essa duração). */
+        .nlh-log-row-fold { animation: nlhLogRowIn .18s ease-out, nlhLogRowWalkOut .4s ease-in 1s both; }
         .nlh-action-log-scroll { scrollbar-width: thin; scrollbar-color: #475569 rgba(15,23,42,0.4); }
         .nlh-action-log-scroll::-webkit-scrollbar { width: 6px; }
         .nlh-action-log-scroll::-webkit-scrollbar-track { background: rgba(15,23,42,0.4); border-radius: 3px; }
@@ -4879,7 +4881,7 @@ export default function App() {
         ) : (
           <div className="rounded-md" style={{ border: "1.5px solid #22C55E", background: "rgba(15,23,42,0.82)", boxShadow: "0 0 10px rgba(34,197,94,0.18)", padding: 7 }}>
             <div style={{ color: "#22C55E", fontSize: 11, fontWeight: 900, textAlign: "center", marginBottom: 6, letterSpacing: "0.08em" }}>JOGADORES COM AÇÃO</div>
-            <div ref={playersSectionRef} className="nlh-action-log-scroll" style={{ height: Math.max(1, Math.min(actionLogVisibleRows.length, ACTION_LOG_VISIBLE_ROWS)) * ACTION_LOG_ROW_HEIGHT, transition: "height 160ms ease", overflowY: "auto", display: "flex", flexDirection: "column", gap: 2 }}>
+            <div ref={playersSectionRef} className="nlh-action-log-scroll" style={{ height: Math.max(1, Math.min(actionLogVisibleRows.length, ACTION_LOG_VISIBLE_ROWS)) * ACTION_LOG_ROW_HEIGHT, transition: "height 160ms ease", overflowY: "auto", overflowX: "hidden", display: "flex", flexDirection: "column", gap: 2 }}>
               {actionLogVisibleRows.length === 0 && (
                 <div style={{ color: "#6B7280", fontSize: 10, textAlign: "center", padding: "10px 0" }}>—</div>
               )}
