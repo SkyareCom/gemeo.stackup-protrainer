@@ -1,0 +1,10 @@
+Explicacoes em portugues correto, graduacao do card, toggle INICIAR/FINALIZAR, sons e correcao de coerencia CHECK/mix/FOLD
+
+- Cadeia de 35 indicadores: prosa reescrita em portugues do Brasil com gramatica correta, mantendo em ingles apenas a terminologia de poker (pot, bet, call, raise, fold, equity, nut, blocker, GTO, EV, SPR, MDF etc.)
+- Card de decisao: novas graduacoes JOGADA PADRAO (+) EV - BEST PLAY / JOGADA AJUSTAVEL - INACCURACY / JOGADA COM ERRO MODERADO - MISTAKE / JOGADA COM ERRO GRAVE - SPEW, com bordas verde/laranja/vermelho/vermelho piscando, ligadas a explicacao final dos 35 pontos
+- Botao INICIAR agora vira FINALIZAR (encerra a sequencia de acoes atual) e volta a INICIAR
+- Sons de acao redesenhados (reverb algoritmica, cliques de ficha em camadas, jitter, flutter no fold) e volume aumentado (2.2x)
+- Corrige bug real de incoerencia entre acao sugerida CHECK, mix de frequencias e a nota do card: botao FOLD/CALL/CHECK agora respeita a legalidade real da acao (antes dava pra clicar FOLD numa acao ilegal e cair num EV de fallback -99, virando SPEW artificial); mixFrequencies ganhou frequencia propria de CHECK em vez de somar no FOLD; painel mostra so as acoes que realmente compoem a mistura
+- Novo botao REPETIR SPOTS (entre INICIAR e SOM): reinicia o treino reproduzindo os mesmos spots ja vistos, na mesma ordem
+
+Co-Authored-By: Claude Sonnet 5 <noreply@anthropic.com>
