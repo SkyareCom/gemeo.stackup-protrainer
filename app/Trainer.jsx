@@ -2223,12 +2223,17 @@ function ConfigPanel({ open, onToggle, title, summary, color = "#FACC15", minHei
 // Botão de trava — no mesmo padrão visual dos cards de posição (retângulo com borda), com o
 // emoji indicando o estado: ❌ travado (seleção da seção congelada), ✅ livre (pode escolher).
 function fmtChips(n) {
-  if (n >= 1000) {
-    const inThousands = n / 1000;
+  // Cadeias de subtração em ponto flutuante (stack - apostas já pagas) podem deixar "poeira"
+  // como 7.275957614183426e-12 em vez de 0 exato. Sem essa limpeza, String(n) exibia esse
+  // valor em notação científica cru (bug real reportado: "S 7.275957614183426E-12" no stack
+  // do BTN após all in). Zera ruído abaixo de 1e-6 e arredonda o resto para 2 casas.
+  const value = Math.abs(n) < 1e-6 ? 0 : Math.round(n * 100) / 100;
+  if (value >= 1000) {
+    const inThousands = value / 1000;
     const oneDecimalIsExact = Math.abs(inThousands * 10 - Math.round(inThousands * 10)) < 0.0001;
     return inThousands.toFixed(oneDecimalIsExact ? 1 : 2) + " K";
   }
-  return String(n);
+  return String(value);
 }
 function CardPip({ card, hidden }) {
   if (hidden) return <span style={{ fontSize: 15 }}>🂠</span>;
@@ -3970,7 +3975,13 @@ export default function App() {
       playActionSound(actionSequence[actionStep].action);
       lastSoundedStepRef.current = actionStep;
     }
-    const timer = window.setTimeout(() => setActionStep((step) => step + 1), Math.round(1000 / actionSpeed));
+    // Jogador que dá fold: a linha some (fade-out célula a célula) ainda dentro da janela normal
+    // de revelação, mas a linha (agora vazia) precisa continuar ocupando o card por mais 2
+    // segundos FIXOS antes de avançar para a próxima ação — tempo fixo (não escalado por
+    // actionSpeed) para dar tempo real de perceber o fold antes do log seguir adiante.
+    const isFoldStep = actionSequence[actionStep].action === "FOLD";
+    const baseDelay = Math.round(1000 / actionSpeed);
+    const timer = window.setTimeout(() => setActionStep((step) => step + 1), isFoldStep ? baseDelay + 2000 : baseDelay);
     return () => window.clearTimeout(timer);
   }, [actionStep, actionSequence, actionPaused, actionSpeed, playActionSound]);
 
