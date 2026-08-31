@@ -1,0 +1,5 @@
+{
+  "d1": null,
+  "r2": null,
+  "_todo": "Placeholder restored by structure cleanup — this file was missing from the uploaded repo. Set 'd1' to your Cloudflare D1 binding name (e.g. \"DB\") and 'r2' to your R2 bucket binding name if this app uses them locally; leave null to build without those bindings."
+}
