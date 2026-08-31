@@ -253,6 +253,10 @@ const INACTIVE_SEAT_COLOR = "#374151";
 // altura máxima (rolando o resto) quando o histórico da street passa de ACTION_LOG_VISIBLE_ROWS.
 const ACTION_LOG_ROW_HEIGHT = 34;
 const ACTION_LOG_VISIBLE_ROWS = 7;
+// Espaço entre as linhas de jogadores dentro do card — a altura visível do card (ver o cálculo
+// que usa esses dois valores juntos mais abaixo) precisa somar esse gap entre linhas, senão o
+// card corta a última linha mesmo dentro do limite de ACTION_LOG_VISIBLE_ROWS.
+const ACTION_LOG_ROW_GAP = 8;
 const ACTION_SEAT_COLORS = {
   RAISE: "#22C55E",
   "ISO RAISE": "#22C55E",
@@ -2286,6 +2290,14 @@ const ACTION_VERDICT_PT = { FOLD: "FOLDAR", CALL: "PAGAR", RAISE: "AUMENTAR", CH
 const ACTION_AGGRESSIVENESS = { FOLD: 0, CHECK: 0, CALL: 1, RAISE: 2, "ALL IN": 3 };
 
 const STREET_LABEL_PT = { "PRE-FLOP": "PRÉ-FLOP", FLOP: "FLOP", TURN: "TURN", RIVER: "RIVER" };
+// Cor do badge de street no card JOGADORES COM AÇÃO — pré-flop verde, flop azul, turn laranja,
+// river vermelho.
+function streetBadgeColor(street) {
+  if (street === "FLOP") return "#3B82F6";
+  if (street === "TURN") return "#F97316";
+  if (street === "RIVER") return "#EF4444";
+  return "#4ADE80";
+}
 
 // Traduz um threshold de percentil (ex.: "top 25%") num range de mãos legível (ex.: "77+, ATs+, AJo+").
 // Pares são sempre monotônicos na nossa grade (se um par entra, todos acima também entram).
@@ -4881,7 +4893,7 @@ export default function App() {
         ) : (
           <div className="rounded-md" style={{ border: "1.5px solid #22C55E", background: "rgba(15,23,42,0.82)", boxShadow: "0 0 10px rgba(34,197,94,0.18)", padding: 7 }}>
             <div style={{ color: "#22C55E", fontSize: 11, fontWeight: 900, textAlign: "center", marginBottom: 6, letterSpacing: "0.08em" }}>JOGADORES COM AÇÃO</div>
-            <div ref={playersSectionRef} className="nlh-action-log-scroll" style={{ height: Math.max(1, Math.min(actionLogVisibleRows.length, ACTION_LOG_VISIBLE_ROWS)) * ACTION_LOG_ROW_HEIGHT, transition: "height 160ms ease", overflowY: "auto", overflowX: "hidden", display: "flex", flexDirection: "column", gap: 2 }}>
+            <div ref={playersSectionRef} className="nlh-action-log-scroll" style={{ height: (() => { const rows = Math.max(1, Math.min(actionLogVisibleRows.length, ACTION_LOG_VISIBLE_ROWS)); return rows * ACTION_LOG_ROW_HEIGHT + (rows - 1) * ACTION_LOG_ROW_GAP; })(), transition: "height 160ms ease", overflowY: "auto", overflowX: "hidden", display: "flex", flexDirection: "column", gap: ACTION_LOG_ROW_GAP }}>
               {actionLogVisibleRows.length === 0 && (
                 <div style={{ color: "#6B7280", fontSize: 10, textAlign: "center", padding: "10px 0" }}>—</div>
               )}
@@ -4889,6 +4901,7 @@ export default function App() {
                 const isActiveRow = !!actionLogActiveRow && rowIdx === actionLogVisibleRows.length - 1 && row.key === actionLogActiveRow.key;
                 const isFoldingRow = isActiveRow && row.action === "FOLD";
                 const posColor = positionBadgeColor(row.pos) || "#9CA3AF";
+                const streetColor = streetBadgeColor(spot.street);
                 const actColor = row.isHero ? heroPromptColor : row.action === "FOLD" ? "#6B7280" : actionSeatColor(row.action);
                 // Linha do herói pendente: pisca/brilha (mesmo efeito e mesma cor — heroPromptColor
                 // via positionBadgeColor — do card HERÓI ao lado do board) enquanto ele ainda não
@@ -4908,7 +4921,7 @@ export default function App() {
                       borderRadius: 4,
                     }}
                   >
-                    <div className="nlh-log-cell rounded" style={{ color: "#4ADE80", border: "1px solid #4ADE80", background: "rgba(74,222,128,0.1)", textAlign: "center", padding: "2px 3px", fontSize: 10, fontWeight: 900, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{STREET_LABEL_PT[spot.street] || spot.street}</div>
+                    <div className="nlh-log-cell rounded" style={{ color: streetColor, border: `1px solid ${streetColor}`, background: `${streetColor}18`, textAlign: "center", padding: "2px 3px", fontSize: 10, fontWeight: 900, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{STREET_LABEL_PT[spot.street] || spot.street}</div>
                     <div
                       className={`nlh-log-cell rounded ${heroPulsing ? "nlh-hero-decision-pulse" : ""}`}
                       style={{ flex: 1, minWidth: 0, color: posColor, border: `1px solid ${posColor}`, background: `${posColor}18`, textAlign: "center", padding: "2px 3px", fontSize: 11, fontWeight: 900 }}
