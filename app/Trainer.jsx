@@ -533,13 +533,15 @@ function computeInvolvedPositions(spot) {
 // Grupos de posição usados nos treinos específicos (defesa/ataque de BB).
 const POSITION_GROUPS = { EP: ["UTG","UTG1","MP"], MP_GROUP: ["MP1","LJ","HJ"], LP: ["CO","BTN","SB"] };
 // Cor do badge de posição na mesa — puramente visual, não confundir com POSITION_GROUPS acima
-// (que agrupa por força estratégica pros presets BB_EP/BB_MP/BB_LP). SB/BB vermelho, UTG/UTG1/
-// MP/MP1 amarelo, HJ/LJ ciano, CO/BTN verde.
+// (que agrupa por força estratégica pros presets BB_EP/BB_MP/BB_LP). SB/BB vermelho, UTG/UTG1
+// roxo, MP/MP1 azul, HJ/LJ roxo, CO amarelo, BTN branco.
 function positionBadgeColor(pos) {
   if (["SB", "BB"].includes(pos)) return "#EF4444";
-  if (["UTG", "UTG1", "MP", "MP1"].includes(pos)) return "#FACC15";
+  if (["UTG", "UTG1"].includes(pos)) return "#A855F7";
+  if (["MP", "MP1"].includes(pos)) return "#3B82F6";
   if (["HJ", "LJ"].includes(pos)) return "#A855F7";
-  if (["CO", "BTN"].includes(pos)) return "#3B82F6";
+  if (pos === "CO") return "#FACC15";
+  if (pos === "BTN") return "#FFFFFF";
   return null;
 }
 // Treinos específicos: filtram os bancos já existentes por posição do herói (e, quando aplicável,
@@ -4809,15 +4811,19 @@ export default function App() {
               const displayStackBB = Math.max(0, Number(p.stackBB || 0) - committedBB);
               const miniActionColor = shownAction === "---" || shownAction === "AGUARDANDO" ? INACTIVE_SEAT_COLOR : shownAction === "FOLD" ? "#6B7280" : actionSeatColor(shownAction);
               const cardBorderColor = positionBadgeColor(p.pos) || seatColor(p);
+              // Jogador com a vez agora (isActionActive) sempre borda verde — sinal único e
+              // consistente de "acontecendo agora", independente da cor de posição por baixo
+              // (que continua valendo pro texto/badges internos do card).
+              const activeBorderColor = p.isActionActive ? "#22C55E" : cardBorderColor;
               return (
                 <div key={i} className={`rounded-md ${p.isActionActive ? "nlh-action-flash" : ""}`} style={{
                   gridRow: p.gridRow,
                   gridColumn: p.gridColumn,
                   minHeight: 58,
-                  border: `${p.isHero ? 2 : 1.5}px solid ${cardBorderColor}`,
+                  border: `${p.isHero ? 2 : 1.5}px solid ${activeBorderColor}`,
                   color: cardBorderColor,
                   opacity: p.opacity,
-                  boxShadow: p.isActionActive ? `0 0 14px ${cardBorderColor}` : "none",
+                  boxShadow: p.isActionActive ? "0 0 14px #22C55E" : "none",
                   transition: "opacity 180ms ease, box-shadow 180ms ease",
                   padding: "5px",
                   display: "flex",
@@ -4850,7 +4856,19 @@ export default function App() {
                   <div
                     key={row.key}
                     className={`nlh-log-row ${isFoldingRow ? "nlh-log-row-fold" : ""} ${isActiveRow && !isFoldingRow ? "nlh-action-flash" : ""}`}
-                    style={{ flex: `0 0 ${ACTION_LOG_ROW_HEIGHT}px`, display: "grid", gridTemplateColumns: "0.85fr 0.6fr 1fr 1.15fr", gap: 6, alignItems: "center", padding: "0 2px" }}
+                    style={{
+                      flex: `0 0 ${ACTION_LOG_ROW_HEIGHT}px`,
+                      display: "grid",
+                      gridTemplateColumns: "0.85fr 0.6fr 1fr 1.15fr",
+                      gap: 6,
+                      alignItems: "center",
+                      padding: "0 2px",
+                      borderRadius: 4,
+                      // Linha com a vez agora (isActiveRow) sempre em verde — mesmo sinal
+                      // "acontecendo agora" usado no card do Modo Torneio — sem mexer nas cores
+                      // de posição/ação dos badges internos.
+                      boxShadow: isActiveRow ? "inset 0 0 0 1.5px #22C55E, 0 0 8px rgba(34,197,94,0.45)" : "none",
+                    }}
                   >
                     <div className="nlh-log-cell rounded" style={{ color: "#4ADE80", border: "1px solid #4ADE80", background: "rgba(74,222,128,0.1)", textAlign: "center", padding: "2px 3px", fontSize: 10, fontWeight: 900, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{STREET_LABEL_PT[spot.street] || spot.street}</div>
                     <div className="nlh-log-cell rounded" style={{ color: posColor, border: `1px solid ${posColor}`, background: `${posColor}18`, textAlign: "center", padding: "2px 3px", fontSize: 11, fontWeight: 900 }}>{row.pos}</div>
