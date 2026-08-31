@@ -248,9 +248,11 @@ const HERO_SEAT_COLOR = "#3B82F6";
 const VILLAIN_SEAT_COLOR = "#EC4899";
 const INACTIVE_SEAT_COLOR = "#374151";
 // Card único de log de ação (ver actionLogFixedRows/actionLogActiveRow mais abaixo): altura de
-// cada linha e quantas ficam visíveis de uma vez antes de precisar rolar.
+// cada linha e quantas ficam visíveis de uma vez antes de precisar rolar. O card em si é
+// adaptável — com 2 jogadores de ação ele só ocupa a altura de 2 linhas — e só trava nessa
+// altura máxima (rolando o resto) quando o histórico da street passa de ACTION_LOG_VISIBLE_ROWS.
 const ACTION_LOG_ROW_HEIGHT = 34;
-const ACTION_LOG_VISIBLE_ROWS = 6;
+const ACTION_LOG_VISIBLE_ROWS = 7;
 const ACTION_SEAT_COLORS = {
   RAISE: "#22C55E",
   "ISO RAISE": "#22C55E",
@@ -3968,7 +3970,7 @@ export default function App() {
       playActionSound(actionSequence[actionStep].action);
       lastSoundedStepRef.current = actionStep;
     }
-    const timer = window.setTimeout(() => setActionStep((step) => step + 1), Math.round(680 / actionSpeed));
+    const timer = window.setTimeout(() => setActionStep((step) => step + 1), Math.round(1000 / actionSpeed));
     return () => window.clearTimeout(timer);
   }, [actionStep, actionSequence, actionPaused, actionSpeed, playActionSound]);
 
@@ -4108,7 +4110,34 @@ export default function App() {
       }
     }
   }
-  const actionLogVisibleRows = actionLogActiveRow ? [...actionLogFixedRows, actionLogActiveRow] : actionLogFixedRows;
+  // Assim que chega a vez do herói (sequenceReady), ele ganha sua própria linha na lista —
+  // obrigatória, aparece ANTES de qualquer clique de decisão, só pra deixar claro "agora é a
+  // vez dele". Não é um evento de actionSequence (o herói pendente nunca é — só decisões
+  // anteriores dele numa mesma street, se houver, já viraram linha fixa no loop acima); por
+  // isso é calculada à parte, igual à mesma fonte de stack/posição usada em animatedSeats.
+  let heroLogRow = null;
+  if (!torneioMode && sequenceReady) {
+    const heroSeat = animatedSeats.find((s) => s.isHero);
+    if (heroSeat) {
+      const committedChips = Number(heroSeat.displayBetChips || 0);
+      const committedBB = Number(heroSeat.displayBetBB || 0);
+      const paidAnteBB = spot.street === "PRE-FLOP" && heroSeat.pos === "BB" ? Number((spot.ante || spot.bb) / spot.bb) : 0;
+      const paidAnteChips = paidAnteBB * spot.bb;
+      heroLogRow = {
+        key: "hero-pending",
+        pos: heroSeat.pos,
+        action: heroTurnLabel,
+        isHero: true,
+        stackChips: Math.max(0, Number(heroSeat.stackChips || 0) - committedChips - paidAnteChips),
+        stackBB: Math.max(0, Number(heroSeat.stackBB || 0) - committedBB - paidAnteBB),
+      };
+    }
+  }
+  const actionLogVisibleRows = heroLogRow
+    ? [...actionLogFixedRows, heroLogRow]
+    : actionLogActiveRow
+      ? [...actionLogFixedRows, actionLogActiveRow]
+      : actionLogFixedRows;
   const actionLogRowCount = actionLogVisibleRows.length;
   const actionLogLastKey = actionLogActiveRow?.key ?? actionLogFixedRows[actionLogFixedRows.length - 1]?.key ?? null;
 
@@ -4838,8 +4867,8 @@ export default function App() {
           </div>
         ) : (
           <div className="rounded-md" style={{ border: "1.5px solid #22C55E", background: "rgba(15,23,42,0.82)", boxShadow: "0 0 10px rgba(34,197,94,0.18)", padding: 7 }}>
-            <div style={{ color: "#93C5FD", fontSize: 11, fontWeight: 900, textAlign: "center", marginBottom: 6, letterSpacing: "0.08em" }}>JOGADORES COM AÇÃO</div>
-            <div ref={playersSectionRef} className="nlh-action-log-scroll" style={{ height: ACTION_LOG_ROW_HEIGHT * ACTION_LOG_VISIBLE_ROWS, overflowY: "auto", display: "flex", flexDirection: "column", gap: 2 }}>
+            <div style={{ color: "#22C55E", fontSize: 11, fontWeight: 900, textAlign: "center", marginBottom: 6, letterSpacing: "0.08em" }}>JOGADORES COM AÇÃO</div>
+            <div ref={playersSectionRef} className="nlh-action-log-scroll" style={{ height: Math.max(1, Math.min(actionLogVisibleRows.length, ACTION_LOG_VISIBLE_ROWS)) * ACTION_LOG_ROW_HEIGHT, transition: "height 160ms ease", overflowY: "auto", display: "flex", flexDirection: "column", gap: 2 }}>
               {actionLogVisibleRows.length === 0 && (
                 <div style={{ color: "#6B7280", fontSize: 10, textAlign: "center", padding: "10px 0" }}>—</div>
               )}
@@ -4847,7 +4876,11 @@ export default function App() {
                 const isActiveRow = !!actionLogActiveRow && rowIdx === actionLogVisibleRows.length - 1 && row.key === actionLogActiveRow.key;
                 const isFoldingRow = isActiveRow && row.action === "FOLD";
                 const posColor = positionBadgeColor(row.pos) || "#9CA3AF";
-                const actColor = row.action === "FOLD" ? "#6B7280" : actionSeatColor(row.action);
+                const actColor = row.isHero ? heroPromptColor : row.action === "FOLD" ? "#6B7280" : actionSeatColor(row.action);
+                // Linha do herói pendente: pisca/brilha (mesmo efeito e mesma cor — heroPromptColor
+                // via positionBadgeColor — do card HERÓI ao lado do board) enquanto ele ainda não
+                // decidiu; some do "piscando" assim que decision existe, igual ao card HERÓI.
+                const heroPulsing = row.isHero && sequenceReady && !decision;
                 return (
                   <div
                     key={row.key}
@@ -4863,7 +4896,10 @@ export default function App() {
                     }}
                   >
                     <div className="nlh-log-cell rounded" style={{ color: "#4ADE80", border: "1px solid #4ADE80", background: "rgba(74,222,128,0.1)", textAlign: "center", padding: "2px 3px", fontSize: 10, fontWeight: 900, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{STREET_LABEL_PT[spot.street] || spot.street}</div>
-                    <div className="nlh-log-cell rounded" style={{ color: posColor, border: `1px solid ${posColor}`, background: `${posColor}18`, textAlign: "center", padding: "2px 3px", fontSize: 11, fontWeight: 900 }}>{row.pos}</div>
+                    <div
+                      className={`nlh-log-cell rounded ${heroPulsing ? "nlh-hero-decision-pulse" : ""}`}
+                      style={{ flex: 1, minWidth: 0, color: posColor, border: `1px solid ${posColor}`, background: `${posColor}18`, textAlign: "center", padding: "2px 3px", fontSize: 11, fontWeight: 900 }}
+                    >{row.pos}</div>
                     <div className="nlh-log-cell rounded" style={{ color: actColor, border: `1px solid ${actColor}`, background: `${actColor}18`, textAlign: "center", padding: "2px 3px", fontSize: 11, fontWeight: 900, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{row.action}</div>
                     <div className="nlh-log-cell" style={{ color: "#D1D5DB", fontSize: 10, textAlign: "center", whiteSpace: "nowrap" }}><b>S {fmtChips(row.stackChips)} • {row.stackBB.toFixed(1)} BB</b></div>
                   </div>
