@@ -256,7 +256,7 @@ const ACTION_LOG_VISIBLE_ROWS = 7;
 // Espaço entre as linhas de jogadores dentro do card — a altura visível do card (ver o cálculo
 // que usa esses dois valores juntos mais abaixo) precisa somar esse gap entre linhas, senão o
 // card corta a última linha mesmo dentro do limite de ACTION_LOG_VISIBLE_ROWS.
-const ACTION_LOG_ROW_GAP = 8;
+const ACTION_LOG_ROW_GAP = 5;
 const ACTION_SEAT_COLORS = {
   RAISE: "#22C55E",
   "ISO RAISE": "#22C55E",
