@@ -2669,7 +2669,7 @@ function build35PointSummaryLines(points) {
 function EvaluationPanel({ title, color, action, summary, explanation, lines, revealed }) {
   const c = revealed ? color : "#4B5563";
   return (
-    <div className="rounded-md p-3 flex flex-col gap-2 text-left" style={{ border: `1px solid ${c}`, opacity: revealed ? 1 : 0.55, textTransform: "uppercase" }}>
+    <div className="rounded-md p-3 flex flex-col gap-2 text-left" style={{ border: `1.5px solid ${c}`, opacity: revealed ? 1 : 0.55, textTransform: "uppercase" }}>
       <div style={{ fontSize: 11, color: c, fontWeight: 900 }}>{title}</div>
       <div style={{ fontSize: 11, color: revealed ? "#FDE047" : "#6B7280", fontWeight: 800, borderLeft: `2px solid ${revealed ? "#FACC15" : "#4B5563"}`, paddingLeft: 8 }}>
         {revealed ? summary : "Aguardando sua decisão..."}
@@ -4767,26 +4767,33 @@ export default function App() {
         </div>
 
         <div className="grid grid-cols-2 gap-2">
-          <div ref={boardSectionRef} className="rounded-md flex flex-col items-center justify-center" style={{ minWidth: 0, position: "relative", height: 65, scrollMarginTop: 6, border: "2px solid #22C55E", boxShadow: "0 0 16px rgba(34,197,94,0.5), 0 0 28px rgba(34,197,94,0.25)", background: "rgba(34,197,94,0.06)", padding: "8px 0", textAlign: "center" }}>
-            {(torneioMode ? false : actionFlowEnabled && spot.board.length > 0) && (
-              <div style={{ fontSize: 11, fontWeight: 900, color: "#4ADE80", letterSpacing: "0.25em", lineHeight: 1.1 }}>{STREET_LABEL_PT[spot.street] || spot.street}</div>
-            )}
-            <div className="flex items-center justify-center gap-2" style={{ marginTop: (torneioMode ? false : actionFlowEnabled && spot.board.length > 0) ? 4 : 0 }}>
-              {torneioMode
-                ? <span style={{ fontSize: 11, fontWeight: 900, color: "#4ADE80", letterSpacing: "0.3em" }}>PRÉ-FLOP</span>
-                : !actionFlowEnabled
-                  ? <span style={{ fontSize: 11, fontWeight: 900, color: "#4ADE80", letterSpacing: "0.3em" }}>---</span>
-                  : spot.board.length > 0
-                    ? spot.board.map((c, i) => <CardPip key={i} card={c} />)
-                    : <span style={{ fontSize: 11, fontWeight: 900, color: "#4ADE80", letterSpacing: "0.3em" }}>PRÉ-FLOP</span>}
-            </div>
-          </div>
+          {(() => {
+            // Card do board (e seu título/street label) acompanha a cor da borda do badge de
+            // street — verde pré-flop, azul flop, laranja turn, vermelho river.
+            const boardStreetColor = streetBadgeColor(spot.street);
+            return (
+              <div ref={boardSectionRef} className="rounded-md flex flex-col items-center justify-center" style={{ minWidth: 0, position: "relative", height: 65, scrollMarginTop: 6, border: `1.5px solid ${boardStreetColor}`, boxShadow: `0 0 16px ${boardStreetColor}80, 0 0 28px ${boardStreetColor}40`, background: `${boardStreetColor}0F`, padding: "8px 0", textAlign: "center" }}>
+                {(torneioMode ? false : actionFlowEnabled && spot.board.length > 0) && (
+                  <div style={{ fontSize: 11, fontWeight: 900, color: boardStreetColor, letterSpacing: "0.25em", lineHeight: 1.1 }}>{STREET_LABEL_PT[spot.street] || spot.street}</div>
+                )}
+                <div className="flex items-center justify-center gap-2" style={{ marginTop: (torneioMode ? false : actionFlowEnabled && spot.board.length > 0) ? 4 : 0 }}>
+                  {torneioMode
+                    ? <span style={{ fontSize: 11, fontWeight: 900, color: boardStreetColor, letterSpacing: "0.3em" }}>PRÉ-FLOP</span>
+                    : !actionFlowEnabled
+                      ? <span style={{ fontSize: 11, fontWeight: 900, color: boardStreetColor, letterSpacing: "0.3em" }}>---</span>
+                      : spot.board.length > 0
+                        ? spot.board.map((c, i) => <CardPip key={i} card={c} />)
+                        : <span style={{ fontSize: 11, fontWeight: 900, color: boardStreetColor, letterSpacing: "0.3em" }}>PRÉ-FLOP</span>}
+                </div>
+              </div>
+            );
+          })()}
 
           {(() => {
             const heroPos = torneioMode ? torneioContext?.position : (actionFlowEnabled ? spot.heroPosition : null);
             const heroPositionColor = positionBadgeColor(heroPos) || "#3B82F6";
             return (
-              <div className="rounded-md flex flex-col items-center justify-center" style={{ minWidth: 0, position: "relative", height: 65, border: `2px solid ${heroPositionColor}`, background: `${heroPositionColor}29`, boxShadow: `0 0 14px ${heroPositionColor}61, inset 0 0 12px ${heroPositionColor}1F`, padding: "3px 8px", textAlign: "center" }}>
+              <div className="rounded-md flex flex-col items-center justify-center" style={{ minWidth: 0, position: "relative", height: 65, border: `1.5px solid ${heroPositionColor}`, background: `${heroPositionColor}29`, boxShadow: `0 0 14px ${heroPositionColor}61, inset 0 0 12px ${heroPositionColor}1F`, padding: "3px 8px", textAlign: "center" }}>
                 <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 4 }}>
                   <span style={{ color: "#FFF", fontSize: 11, fontWeight: 900, letterSpacing: "0.12em" }}>HERÓI</span>
                   <span className="rounded" style={{ color: heroPositionColor, border: `1px solid ${heroPositionColor}`, background: `${heroPositionColor}18`, padding: "1px 5px", fontSize: 10, fontWeight: 900 }}>{heroPos || "—"}</span>
@@ -4870,7 +4877,7 @@ export default function App() {
                   gridRow: p.gridRow,
                   gridColumn: p.gridColumn,
                   minHeight: 58,
-                  border: `${p.isHero ? 2 : 1.5}px solid ${cardBorderColor}`,
+                  border: `1.5px solid ${cardBorderColor}`,
                   color: cardBorderColor,
                   opacity: p.opacity,
                   boxShadow: p.isActionActive ? `0 0 14px ${cardBorderColor}` : "none",
@@ -4891,48 +4898,57 @@ export default function App() {
             })}
           </div>
         ) : (
-          <div className="rounded-md" style={{ border: "1.5px solid #22C55E", background: "rgba(15,23,42,0.82)", boxShadow: "0 0 10px rgba(34,197,94,0.18)", padding: 7 }}>
-            <div style={{ color: "#22C55E", fontSize: 11, fontWeight: 900, textAlign: "center", marginBottom: 6, letterSpacing: "0.08em" }}>JOGADORES COM AÇÃO</div>
-            <div ref={playersSectionRef} className="nlh-action-log-scroll" style={{ height: (() => { const rows = Math.max(1, Math.min(actionLogVisibleRows.length, ACTION_LOG_VISIBLE_ROWS)); return rows * ACTION_LOG_ROW_HEIGHT + (rows - 1) * ACTION_LOG_ROW_GAP; })(), transition: "height 160ms ease", overflowY: "auto", overflowX: "hidden", display: "flex", flexDirection: "column", gap: ACTION_LOG_ROW_GAP }}>
-              {actionLogVisibleRows.length === 0 && (
-                <div style={{ color: "#6B7280", fontSize: 10, textAlign: "center", padding: "10px 0" }}>—</div>
-              )}
-              {actionLogVisibleRows.map((row, rowIdx) => {
-                const isActiveRow = !!actionLogActiveRow && rowIdx === actionLogVisibleRows.length - 1 && row.key === actionLogActiveRow.key;
-                const isFoldingRow = isActiveRow && row.action === "FOLD";
-                const posColor = positionBadgeColor(row.pos) || "#9CA3AF";
-                const streetColor = streetBadgeColor(spot.street);
-                const actColor = row.isHero ? heroPromptColor : row.action === "FOLD" ? "#6B7280" : actionSeatColor(row.action);
-                // Linha do herói pendente: pisca/brilha (mesmo efeito e mesma cor — heroPromptColor
-                // via positionBadgeColor — do card HERÓI ao lado do board) enquanto ele ainda não
-                // decidiu; some do "piscando" assim que decision existe, igual ao card HERÓI.
-                const heroPulsing = row.isHero && sequenceReady && !decision;
-                return (
-                  <div
-                    key={row.key}
-                    className={`nlh-log-row ${isFoldingRow ? "nlh-log-row-fold" : ""} ${isActiveRow && !isFoldingRow ? "nlh-action-flash" : ""}`}
-                    style={{
-                      flex: `0 0 ${ACTION_LOG_ROW_HEIGHT}px`,
-                      display: "grid",
-                      gridTemplateColumns: "0.85fr 0.6fr 1fr 1.15fr",
-                      gap: 6,
-                      alignItems: "center",
-                      padding: "0 2px",
-                      borderRadius: 4,
-                    }}
-                  >
-                    <div className="nlh-log-cell rounded" style={{ color: streetColor, border: `1px solid ${streetColor}`, background: `${streetColor}18`, textAlign: "center", padding: "2px 3px", fontSize: 10, fontWeight: 900, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{STREET_LABEL_PT[spot.street] || spot.street}</div>
-                    <div
-                      className={`nlh-log-cell rounded ${heroPulsing ? "nlh-hero-decision-pulse" : ""}`}
-                      style={{ flex: 1, minWidth: 0, color: posColor, border: `1px solid ${posColor}`, background: `${posColor}18`, textAlign: "center", padding: "2px 3px", fontSize: 11, fontWeight: 900 }}
-                    >{row.pos}</div>
-                    <div className="nlh-log-cell rounded" style={{ color: actColor, border: `1px solid ${actColor}`, background: `${actColor}18`, textAlign: "center", padding: "2px 3px", fontSize: 11, fontWeight: 900, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{row.action}</div>
-                    <div className="nlh-log-cell" style={{ color: "#D1D5DB", fontSize: 10, textAlign: "center", whiteSpace: "nowrap" }}><b>S {fmtChips(row.stackChips)} • {row.stackBB.toFixed(1)} BB</b></div>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
+          (() => {
+            // Borda/glow do card inteiro acompanham a cor do badge de street (mesma lógica do
+            // card do board) — o badge em si migrou pra linha do título (uma vez só por card,
+            // perto da borda esquerda) e saiu das linhas individuais dos jogadores.
+            const playersStreetColor = streetBadgeColor(spot.street);
+            return (
+              <div className="rounded-md" style={{ border: `1.5px solid ${playersStreetColor}`, background: "rgba(15,23,42,0.82)", boxShadow: `0 0 10px ${playersStreetColor}2E`, padding: 7 }}>
+                <div style={{ display: "grid", gridTemplateColumns: "auto 1fr", alignItems: "center", gap: 6, marginBottom: 6 }}>
+                  <div className="rounded" style={{ color: playersStreetColor, border: `1px solid ${playersStreetColor}`, background: `${playersStreetColor}18`, textAlign: "center", padding: "2px 6px", fontSize: 10, fontWeight: 900, whiteSpace: "nowrap" }}>{STREET_LABEL_PT[spot.street] || spot.street}</div>
+                  <div style={{ color: "#22C55E", fontSize: 11, fontWeight: 900, textAlign: "center", letterSpacing: "0.08em" }}>JOGADORES COM AÇÃO</div>
+                </div>
+                <div ref={playersSectionRef} className="nlh-action-log-scroll" style={{ height: (() => { const rows = Math.max(1, Math.min(actionLogVisibleRows.length, ACTION_LOG_VISIBLE_ROWS)); return rows * ACTION_LOG_ROW_HEIGHT + (rows - 1) * ACTION_LOG_ROW_GAP; })(), transition: "height 160ms ease", overflowY: "auto", overflowX: "hidden", display: "flex", flexDirection: "column", gap: ACTION_LOG_ROW_GAP }}>
+                  {actionLogVisibleRows.length === 0 && (
+                    <div style={{ color: "#6B7280", fontSize: 10, textAlign: "center", padding: "10px 0" }}>—</div>
+                  )}
+                  {actionLogVisibleRows.map((row, rowIdx) => {
+                    const isActiveRow = !!actionLogActiveRow && rowIdx === actionLogVisibleRows.length - 1 && row.key === actionLogActiveRow.key;
+                    const isFoldingRow = isActiveRow && row.action === "FOLD";
+                    const posColor = positionBadgeColor(row.pos) || "#9CA3AF";
+                    const actColor = row.isHero ? heroPromptColor : row.action === "FOLD" ? "#6B7280" : actionSeatColor(row.action);
+                    // Linha do herói pendente: pisca/brilha (mesmo efeito e mesma cor — heroPromptColor
+                    // via positionBadgeColor — do card HERÓI ao lado do board) enquanto ele ainda não
+                    // decidiu; some do "piscando" assim que decision existe, igual ao card HERÓI.
+                    const heroPulsing = row.isHero && sequenceReady && !decision;
+                    return (
+                      <div
+                        key={row.key}
+                        className={`nlh-log-row ${isFoldingRow ? "nlh-log-row-fold" : ""} ${isActiveRow && !isFoldingRow ? "nlh-action-flash" : ""}`}
+                        style={{
+                          flex: `0 0 ${ACTION_LOG_ROW_HEIGHT}px`,
+                          display: "grid",
+                          gridTemplateColumns: "0.6fr 1fr 1.15fr",
+                          gap: 6,
+                          alignItems: "center",
+                          padding: "0 2px",
+                          borderRadius: 4,
+                        }}
+                      >
+                        <div
+                          className={`nlh-log-cell rounded ${heroPulsing ? "nlh-hero-decision-pulse" : ""}`}
+                          style={{ flex: 1, minWidth: 0, color: posColor, border: `1px solid ${posColor}`, background: `${posColor}18`, textAlign: "center", padding: "2px 3px", fontSize: 11, fontWeight: 900 }}
+                        >{row.pos}</div>
+                        <div className="nlh-log-cell rounded" style={{ color: actColor, border: `1px solid ${actColor}`, background: `${actColor}18`, textAlign: "center", padding: "2px 3px", fontSize: 11, fontWeight: 900, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{row.action}</div>
+                        <div className="nlh-log-cell" style={{ color: "#D1D5DB", fontSize: 10, textAlign: "center", whiteSpace: "nowrap" }}><b>S {fmtChips(row.stackChips)} • {row.stackBB.toFixed(1)} BB</b></div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            );
+          })()
         )}
 
 
@@ -5244,7 +5260,7 @@ export default function App() {
         )}
 
         {torneioMode && torneioInfo && (
-          <div className="rounded-md" style={{ width: "100%", border: "2px solid #22C55E", background: "rgba(20,60,38,0.18)", boxShadow: "0 0 14px rgba(34,197,94,0.35), inset 0 0 12px rgba(34,197,94,0.1)", padding: "8px 10px" }}>
+          <div className="rounded-md" style={{ width: "100%", border: "1.5px solid #22C55E", background: "rgba(20,60,38,0.18)", boxShadow: "0 0 14px rgba(34,197,94,0.35), inset 0 0 12px rgba(34,197,94,0.1)", padding: "8px 10px" }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 4 }}>
               <span style={{ color: "#22C55E", fontSize: 11, fontWeight: 900, letterSpacing: "0.1em" }}>MODO TORNEIO</span>
               <span style={{ color: "#4ADE80", fontSize: 11, fontWeight: 900 }}>ATIVADO</span>
@@ -5278,7 +5294,7 @@ export default function App() {
           {/* Relatório da prova — DENTRO da gaveta de Modo Prova (mesmo padrão do relatório do
               Modo Torneio, que também vive dentro da própria gaveta de configuração). */}
           {examReport && (
-            <div className="rounded-md" style={{ border: "1px solid #22C55E", background: "rgba(6,78,59,0.18)", padding: 8, marginTop: 2 }}>
+            <div className="rounded-md" style={{ border: "1.5px solid #22C55E", background: "rgba(6,78,59,0.18)", padding: 8, marginTop: 2 }}>
               <div style={{ color: "#22C55E", fontSize: 11, fontWeight: 900, textAlign: "center", marginBottom: 7 }}>RELATÓRIO DA PROVA · {examReport.count} SPOTS</div>
               <div className="grid grid-cols-3 gap-2">
                 {[['PRECISÃO', `${examReport.accuracy.toFixed(1).replace('.', ',')}%`], ['EV PERDIDO', `${examReport.totalLoss.toFixed(2).replace('.', ',')} BB`], ['TEMPO MÉDIO', `${examReport.avgTime.toFixed(1).replace('.', ',')} S`]].map(([label, value]) => <div key={label} className="rounded" style={{ border: "1px solid #22C55E", padding: 6, textAlign: "center" }}><div style={{ color: "#22C55E", fontSize: 10, fontWeight: 900 }}>{label}</div><div style={{ color: "#FFF", fontSize: 13, fontWeight: 900 }}>{value}</div></div>)}
