@@ -4820,7 +4820,7 @@ export default function App() {
             return (
               <div className="rounded-md flex flex-col items-center justify-center" style={{ minWidth: 0, position: "relative", height: 65, border: `1.5px solid ${heroPositionColor}`, boxShadow: `0 0 14px ${heroPositionColor}61, inset 0 0 12px ${heroPositionColor}1F`, padding: "3px 8px", textAlign: "center" }}>
                 <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 4 }}>
-                  <span style={{ color: "#FFF", fontSize: 11, fontWeight: 900, letterSpacing: "0.12em" }}>HERÓI</span>
+                  <span style={{ color: heroPositionColor, fontSize: 11, fontWeight: 900, letterSpacing: "0.12em" }}>HERÓI</span>
                   <span className="rounded" style={{ color: heroPositionColor, border: `1px solid ${heroPositionColor}`, background: `${heroPositionColor}18`, padding: "1px 5px", fontSize: 10, fontWeight: 900 }}>{heroPos || "—"}</span>
                 </div>
                 {torneioMode ? (
