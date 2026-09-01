@@ -2315,11 +2315,11 @@ const ACTION_VERDICT_PT = { FOLD: "FOLDAR", CALL: "PAGAR", RAISE: "AUMENTAR", CH
 const ACTION_AGGRESSIVENESS = { FOLD: 0, CHECK: 0, CALL: 1, RAISE: 2, "ALL IN": 3 };
 
 const STREET_LABEL_PT = { "PRE-FLOP": "PRÉ-FLOP", FLOP: "FLOP", TURN: "TURN", RIVER: "RIVER" };
-// Cor do badge de street no card JOGADORES COM AÇÃO — pré-flop verde, flop azul, turn laranja,
+// Cor do badge de street no card JOGADORES COM AÇÃO — pré-flop verde, flop azul, turn rosa,
 // river vermelho.
 function streetBadgeColor(street) {
   if (street === "FLOP") return "#3B82F6";
-  if (street === "TURN") return "#F97316";
+  if (street === "TURN") return "#EC4899";
   if (street === "RIVER") return "#EF4444";
   return "#4ADE80";
 }
@@ -4930,8 +4930,11 @@ export default function App() {
             const playersStreetColor = streetBadgeColor(spot.street);
             return (
               <div className="rounded-md" style={{ border: `1.5px solid ${playersStreetColor}`, background: "rgba(15,23,42,0.82)", boxShadow: `0 0 10px ${playersStreetColor}2E`, padding: 7 }}>
-                <div style={{ display: "grid", gridTemplateColumns: "auto 1fr", alignItems: "center", gap: 6, marginBottom: 6 }}>
-                  <div className="rounded" style={{ color: playersStreetColor, border: `1px solid ${playersStreetColor}`, background: `${playersStreetColor}18`, textAlign: "center", padding: "2px 6px", fontSize: 10, fontWeight: 900, whiteSpace: "nowrap" }}>{STREET_LABEL_PT[spot.street] || spot.street}</div>
+                {/* Badge de street fica ancorado na borda esquerda (position: absolute) pra não
+                    deslocar o título — "JOGADORES COM AÇÃO" fica centralizado na linha inteira do
+                    card, não apenas no espaço que sobra depois do badge. */}
+                <div style={{ position: "relative", display: "flex", alignItems: "center", justifyContent: "center", minHeight: 20, marginBottom: 6 }}>
+                  <div className="rounded" style={{ position: "absolute", left: 0, color: playersStreetColor, border: `1px solid ${playersStreetColor}`, background: `${playersStreetColor}18`, textAlign: "center", padding: "2px 6px", fontSize: 10, fontWeight: 900, whiteSpace: "nowrap" }}>{STREET_LABEL_PT[spot.street] || spot.street}</div>
                   <div style={{ color: "#22C55E", fontSize: 11, fontWeight: 900, textAlign: "center", letterSpacing: "0.08em" }}>JOGADORES COM AÇÃO</div>
                 </div>
                 <div ref={playersSectionRef} className="nlh-action-log-scroll" style={{ height: (() => { const rows = Math.max(1, Math.min(actionLogVisibleRows.length, ACTION_LOG_VISIBLE_ROWS)); return rows * ACTION_LOG_ROW_HEIGHT + (rows - 1) * ACTION_LOG_ROW_GAP; })(), transition: "height 160ms ease", overflowY: "auto", overflowX: "hidden", display: "flex", flexDirection: "column", gap: ACTION_LOG_ROW_GAP }}>
