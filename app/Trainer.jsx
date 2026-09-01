@@ -4934,7 +4934,7 @@ export default function App() {
                     card, não apenas no espaço que sobra depois do badge. */}
                 <div style={{ position: "relative", display: "flex", alignItems: "center", justifyContent: "center", minHeight: 20, marginBottom: 6 }}>
                   <div className="rounded" style={{ position: "absolute", left: 0, color: playersStreetColor, border: `1px solid ${playersStreetColor}`, background: `${playersStreetColor}18`, textAlign: "center", padding: "2px 6px", fontSize: 10, fontWeight: 900, whiteSpace: "nowrap" }}>{STREET_LABEL_PT[spot.street] || spot.street}</div>
-                  <div style={{ color: "#22C55E", fontSize: 11, fontWeight: 900, textAlign: "center", letterSpacing: "0.08em" }}>JOGADORES COM AÇÃO</div>
+                  <div style={{ color: playersStreetColor, fontSize: 11, fontWeight: 900, textAlign: "center", letterSpacing: "0.08em" }}>JOGADORES COM AÇÃO</div>
                 </div>
                 <div ref={playersSectionRef} className="nlh-action-log-scroll" style={{ height: (() => { const rows = Math.max(1, Math.min(actionLogVisibleRows.length, ACTION_LOG_VISIBLE_ROWS)); return rows * ACTION_LOG_ROW_HEIGHT + (rows - 1) * ACTION_LOG_ROW_GAP; })(), transition: "height 160ms ease", overflowY: "auto", overflowX: "hidden", display: "flex", flexDirection: "column", gap: ACTION_LOG_ROW_GAP }}>
                   {actionLogVisibleRows.length === 0 && (
