@@ -4259,9 +4259,13 @@ export default function App() {
   // escolha do usuário em APAGAR DADOS / MANTER DADOS (ver keepDataOnRestart).
   const totalCorrect = history.filter((h) => h.correct).length;
   const totalRealized = history.length;
-  const totalAccuracyPct = totalRealized > 0 ? ((totalCorrect / totalRealized) * 100).toFixed(1) : "0.0";
   const distinctTrainingKeys = new Set(history.map((h) => h.presetKey || h.fase));
   const totalSpots = Math.max(spotsPerFase, distinctTrainingKeys.size * spotsPerFase);
+  // ACERTOS (linha 4, %): acertos totais sobre o TOTAL DE SPOTS DISPONÍVEIS PRA TREINO
+  // (totalSpots — o mesmo valor mostrado na linha 3 da coluna SPOTS ao lado), não sobre
+  // totalRealized — pedido explícito do usuário pra refletir o aproveitamento real contra
+  // todo o banco de spots, não só contra o que já foi jogado.
+  const totalAccuracyPct = totalSpots > 0 ? ((totalCorrect / totalSpots) * 100).toFixed(1) : "0.0";
   const totalCompletionPct = Math.min(100, (totalRealized / totalSpots) * 100).toFixed(1);
 
   // LEAK FINDER — 4 etapas reais sobre o histórico de mãos treinadas NO APP (não sala online):
@@ -4329,6 +4333,12 @@ export default function App() {
   const spotsCurrentTarget = spotsPerFase * activeFilterDimensions;
   const spotsCurrentPct = Math.min(100, (infoTreinoRealizados / spotsCurrentTarget) * 100).toFixed(1);
   const spotsTotalAvailable = totalSpots;
+  // Card DESEMPENHO, coluna SPOTS (linha 2, %): alvo do filtro atual (spotsCurrentTarget, linha 1)
+  // sobre o TOTAL de spots disponíveis pra treino (spotsTotalAvailable, linha 3) — não sobre
+  // infoTreinoRealizados, que é o que spotsCurrentPct usa pro card INFORMAÇÕES DO TREINO (mantido
+  // como está). Como a linha 3 já É spotsTotalAvailable, a linha 4 (%) é trivialmente 100% —
+  // não precisa de variável, é escrita direto no JSX.
+  const desempenhoSpotsMetaPct = spotsTotalAvailable > 0 ? Math.min(100, (spotsCurrentTarget / spotsTotalAvailable) * 100).toFixed(1) : "0.0";
 
   return (
     <div style={{ background: "#000", minHeight: "100vh", padding: 12, fontFamily: "'JetBrains Mono', monospace", color: "#FFF", textTransform: "uppercase" }}>
@@ -5096,9 +5106,9 @@ export default function App() {
             <div className="rounded-md flex flex-col items-center justify-center" style={{ minHeight: 92, border: "1.5px solid #3B82F6", boxShadow: "0 0 12px rgba(59,130,246,0.3)", padding: "6px 2px" }}>
               <div style={{ color: "#93C5FD", fontWeight: 900, fontSize: 11, letterSpacing: "0.05em" }}>SPOTS</div>
               <div style={{ color: "#FFF", fontWeight: 900, fontSize: 11, lineHeight: 1.5 }}>{String(spotsCurrentTarget).padStart(5,"0")}</div>
-              <div style={{ color: "#6B7280", fontWeight: 700, fontSize: 11, lineHeight: 1.5 }}>{spotsCurrentPct.replace(".", ",")}%</div>
+              <div style={{ color: "#6B7280", fontWeight: 700, fontSize: 11, lineHeight: 1.5 }}>{desempenhoSpotsMetaPct.replace(".", ",")}%</div>
               <div style={{ color: "#FFF", fontWeight: 900, fontSize: 11, lineHeight: 1.5 }}>{String(spotsTotalAvailable).padStart(5,"0")}</div>
-              <div style={{ color: "#6B7280", fontWeight: 700, fontSize: 11, lineHeight: 1.5 }}>{totalCompletionPct.replace(".", ",")}%</div>
+              <div style={{ color: "#6B7280", fontWeight: 700, fontSize: 11, lineHeight: 1.5 }}>100,0%</div>
             </div>
           </div>
 
