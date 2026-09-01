@@ -4759,7 +4759,7 @@ export default function App() {
                     <span style={{ fontSize: 10, fontWeight: 700, color: "#9CA3AF" }}>{fmtChips(agressor.displayBetChips)} • {agressor.displayBetBB.toFixed(1)} BB</span>
                   </div>
                   <div style={{ fontSize: 10, fontWeight: 700, color: "#9CA3AF" }}>
-                    <span className="nlh-blink-text" style={{ color: "#9CA3AF" }}>TO CALL</span> {fmtChips(Math.round(torneioContext.toCallBB * (torneioInfo?.bb || 0)))} • {torneioContext.toCallBB.toFixed(1)} BB
+                    <span className="nlh-blink-text" style={{ color: "#FFFFFF" }}>TO CALL</span> {fmtChips(Math.round(torneioContext.toCallBB * (torneioInfo?.bb || 0)))} • {torneioContext.toCallBB.toFixed(1)} BB
                   </div>
                 </>
               );
@@ -4783,7 +4783,7 @@ export default function App() {
                     <span style={{ fontSize: 10, fontWeight: 700, color: "#9CA3AF" }}>{fmtChips(ultimaAcao.betChips)} • {ultimaAcao.betBB.toFixed(1)} BB</span>
                   </div>
                   <div style={{ fontSize: 10, fontWeight: 700, color: "#9CA3AF" }}>
-                    <span className="nlh-blink-text" style={{ color: "#9CA3AF" }}>TO CALL</span> {fmtChips(spot.callChips || 0)} • {((spot.callChips || 0) / spot.bb).toFixed(1)} BB
+                    <span className="nlh-blink-text" style={{ color: "#FFFFFF" }}>TO CALL</span> {fmtChips(spot.callChips || 0)} • {((spot.callChips || 0) / spot.bb).toFixed(1)} BB
                   </div>
                 </>
               );
