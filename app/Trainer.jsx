@@ -4697,13 +4697,13 @@ export default function App() {
         </div>
 
         <div className="grid grid-cols-3 gap-2">
-          <button onClick={actionFlowEnabled ? endActionSequence : beginActionSequence} disabled={actionStep >= 0 && !sequenceReady} className={`rounded-md ${!actionFlowEnabled ? "nlh-start-pulse" : ""}`} style={{ height: 38, border: "1.5px solid #EF4444", color: "#FFF", background: !actionFlowEnabled ? "rgba(239,68,68,0.22)" : "rgba(239,68,68,0.14)", boxShadow: !actionFlowEnabled ? "0 0 14px rgba(239,68,68,0.75), 0 0 26px rgba(239,68,68,0.35)" : "0 0 10px rgba(239,68,68,0.35)", fontWeight: 900, fontSize: 11, opacity: actionStep >= 0 && !sequenceReady ? 0.55 : 1 }}>
+          <button onClick={actionFlowEnabled ? endActionSequence : beginActionSequence} disabled={actionStep >= 0 && !sequenceReady} className={`rounded-md ${!actionFlowEnabled ? "nlh-start-pulse" : ""}`} style={{ height: 38, border: "1.5px solid #EF4444", color: "#EF4444", background: !actionFlowEnabled ? "rgba(239,68,68,0.22)" : "rgba(239,68,68,0.14)", boxShadow: !actionFlowEnabled ? "0 0 14px rgba(239,68,68,0.75), 0 0 26px rgba(239,68,68,0.35)" : "0 0 10px rgba(239,68,68,0.35)", fontWeight: 900, fontSize: 11, opacity: actionStep >= 0 && !sequenceReady ? 0.55 : 1 }}>
             {actionStep >= 0 && !sequenceReady ? actionPaused ? "AÇÕES PAUSADAS" : "AÇÕES EM ANDAMENTO..." : actionFlowEnabled ? "FINALIZAR" : "INICIAR"}
           </button>
-          <button onClick={repeatSpots} disabled={actionStep >= 0 && !sequenceReady} className="rounded-md" style={{ height: 38, border: "1.5px solid #EF4444", color: "#FCA5A5", background: "transparent", boxShadow: "0 0 10px rgba(239,68,68,0.35)", fontWeight: 900, fontSize: 11, opacity: actionStep >= 0 && !sequenceReady ? 0.55 : 1 }}>
+          <button onClick={repeatSpots} disabled={actionStep >= 0 && !sequenceReady} className="rounded-md" style={{ height: 38, border: "1.5px solid #EF4444", color: "#EF4444", background: "transparent", boxShadow: "0 0 10px rgba(239,68,68,0.35)", fontWeight: 900, fontSize: 11, opacity: actionStep >= 0 && !sequenceReady ? 0.55 : 1 }}>
             REPETIR SPOTS
           </button>
-          <button onClick={() => setSoundEnabled((v) => !v)} className="rounded-md" style={{ height: 38, border: "1.5px solid #EF4444", color: "#FCA5A5", background: soundEnabled ? "rgba(239,68,68,0.14)" : "transparent", boxShadow: "0 0 10px rgba(239,68,68,0.35)", fontWeight: 900, fontSize: 11 }}>
+          <button onClick={() => setSoundEnabled((v) => !v)} className="rounded-md" style={{ height: 38, border: "1.5px solid #EF4444", color: "#EF4444", background: soundEnabled ? "rgba(239,68,68,0.14)" : "transparent", boxShadow: "0 0 10px rgba(239,68,68,0.35)", fontWeight: 900, fontSize: 11 }}>
             {soundEnabled ? "🔊 SOM" : "🔇 SOM"}
           </button>
         </div>
