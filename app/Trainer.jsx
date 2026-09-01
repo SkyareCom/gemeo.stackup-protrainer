@@ -3961,8 +3961,29 @@ export default function App() {
     resetHuSession();
   };
 
-  // Depois do primeiro INICIAR, cada novo spot reproduz automaticamente a ação até o herói.
+  // Depois do primeiro INICIAR, cada novo spot reproduz automaticamente a ação até o herói —
+  // exceto quando ANTERIOR/PRÓXIMO leva de volta a um spot que já foi respondido antes: nesse
+  // caso a mão deve aparecer direto CONGELADA pra revisão (sequência inteira já revelada, sem
+  // reanimar do zero, e a decisão antiga restaurada — o que também trava os botões de ação via
+  // currentSpotIsLocked e realça o botão que foi escolhido na época). Só volta a reanimar do
+  // zero se o spot for reaberto de propósito depois (REVER MÃO, que limpa reviewUnlockedSpotKey
+  // pro valor da mão atual) ou se for um spot realmente novo, nunca respondido.
   useEffect(() => {
+    if (actionFlowEnabled && !decision && currentSpotWasAnswered && reviewUnlockedSpotKey !== currentSpotKey) {
+      const pastRecord = history.find((entry) => entry.spotKey === currentSpotKey);
+      setActionPaused(false);
+      setSequenceReady(true);
+      setActionStep(actionSequence.length);
+      if (pastRecord) {
+        const pastAssessment = assessDecision(pastRecord.action, analysis);
+        setDecision({ action: pastRecord.action, correct: pastRecord.correct, responseMs: pastRecord.responseMs, timeout: !!pastRecord.timedOut, ...pastAssessment });
+      }
+      if (gameFocusRequestedRef.current) {
+        potSectionRef.current?.scrollIntoView({ behavior: "auto", block: "start" });
+        gameFocusRequestedRef.current = false;
+      }
+      return;
+    }
     const resetTimer = window.setTimeout(() => {
       setSequenceReady(false);
       setActionStep(-1);
@@ -3983,7 +4004,11 @@ export default function App() {
       window.clearTimeout(resetTimer);
       window.clearTimeout(focusTimer);
     };
-  }, [spotIndex, fase, street, activePresetKey, actionFlowEnabled]);
+    // `decision` fica de fora do array de deps de propósito: é lido só como trava pontual (não
+    // reagir a cada resposta), pra não reprocessar esse efeito inteiro a cada handleAction —
+    // quem já cobre a mudança real (trocar de spot) é spotIndex/fase/street/activePresetKey.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [spotIndex, fase, street, activePresetKey, actionFlowEnabled, currentSpotWasAnswered, currentSpotKey, reviewUnlockedSpotKey, history, analysis, actionSequence]);
 
   useEffect(() => {
     if (actionStep < 0) return;
