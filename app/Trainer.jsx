@@ -2231,7 +2231,7 @@ function SelCard({ active, onClick, children, style }) {
   return (
     <div onClick={onClick} className="rounded-md flex items-center justify-center cursor-pointer text-center px-1" style={{
       height: 42, fontSize: 11, fontWeight: 800, background: "transparent",
-      border: active ? "1px solid #FACC15" : "1px solid #333", color: active ? "#FACC15" : "#FFF",
+      border: active ? "1.5px solid #FACC15" : "1.5px solid #333", color: active ? "#FACC15" : "#FFF",
       boxShadow: active ? "0 0 12px rgba(250,204,21,0.45)" : "none", ...style,
     }}>{children}</div>
   );
@@ -4357,7 +4357,7 @@ export default function App() {
       `}</style>
       <div style={{ maxWidth: 600, margin: "0 auto", display: "flex", flexDirection: "column", gap: 8, fontSize: 15 }}>
 
-        <div style={{ height: 40, display: "flex", alignItems: "center", justifyContent: "center", color: "#22D3EE", border: "2px solid #22D3EE", background: "rgba(6,182,212,0.18)", boxShadow: "0 0 16px rgba(34,211,238,0.65), 0 0 32px rgba(6,182,212,0.35)", textShadow: "0 1px 2px rgba(0,0,0,0.9), 0 0 10px rgba(34,211,238,0.65)", borderRadius: 8, fontWeight: 900, fontSize: 14, letterSpacing: "0.35em" }}>
+        <div style={{ height: 40, display: "flex", alignItems: "center", justifyContent: "center", color: "#22D3EE", border: "1.5px solid #22D3EE", boxShadow: "0 0 16px rgba(34,211,238,0.65), 0 0 32px rgba(6,182,212,0.35)", textShadow: "0 1px 2px rgba(0,0,0,0.9), 0 0 10px rgba(34,211,238,0.65)", borderRadius: 8, fontWeight: 900, fontSize: 14, letterSpacing: "0.35em" }}>
           STACKUP HOLD&apos;EM
         </div>
 
@@ -4389,9 +4389,9 @@ export default function App() {
                   placeholder={`CHAVE DE API — ${aiProvider.toUpperCase()}`}
                   value={aiKeyInput}
                   onChange={(e) => setAiKeyInput(e.target.value)}
-                  style={{ flex: 1, height: 40, background: "#000", border: "1px solid #A855F7", borderRadius: 6, color: "#FFF", fontSize: 11, padding: "0 8px" }}
+                  style={{ flex: 1, height: 40, background: "#000", border: "1.5px solid #A855F7", borderRadius: 6, color: "#FFF", fontSize: 11, padding: "0 8px" }}
                 />
-                <button onClick={() => saveAiKey(aiProvider, aiKeyInput)} className="rounded-md" style={{ height: 40, padding: "0 12px", border: "1px solid #A855F7", color: "#D8B4FE", background: "#000", fontWeight: 900, fontSize: 11 }}>
+                <button onClick={() => saveAiKey(aiProvider, aiKeyInput)} className="rounded-md" style={{ height: 40, padding: "0 12px", border: "1.5px solid #A855F7", color: "#D8B4FE", background: "#000", fontWeight: 900, fontSize: 11 }}>
                   SALVAR
               </button>
             </div>
@@ -4515,7 +4515,7 @@ export default function App() {
               const active = heroPositionFilter === posKey;
               const label = posKey === "ALEATORIO" ? "ALEATÓRIO" : posKey;
               return (
-                <div key={posKey} onClick={() => handleFilterToggleClick(heroPositionFilter, "ALEATORIO", posKey, (v) => { setHeroPositionFilter(v); setSpotIndex(1); resetHuSession(); })} className="rounded-md flex items-center justify-center cursor-pointer" style={{ height: 30, border: active ? "1.5px solid #FACC15" : "1px solid #333" }}>
+                <div key={posKey} onClick={() => handleFilterToggleClick(heroPositionFilter, "ALEATORIO", posKey, (v) => { setHeroPositionFilter(v); setSpotIndex(1); resetHuSession(); })} className="rounded-md flex items-center justify-center cursor-pointer" style={{ height: 30, border: active ? "1.5px solid #FACC15" : "1.5px solid #333" }}>
                   <div style={{ fontSize: 11, color: "#FACC15", fontWeight: 900, lineHeight: 1.1 }}>{label}</div>
                 </div>
               );
@@ -4525,13 +4525,13 @@ export default function App() {
 
         <ConfigPanel open={openConfigPanel === "fase"} onToggle={() => setOpenConfigPanel((value) => value === "fase" ? null : "fase")} title="TREINO POR FASE" summary={!fase ? "INATIVO" : faseDisplayLabel(fase)}>
           <div className="grid grid-cols-3" style={{ gap: 8 }}>
-            <div onClick={() => handleFilterToggleClick(fase, "ALEATORIO", "ALEATORIO", (v) => { setFase(v); setSpotIndex(1); resetHuSession(); })} className="rounded-md flex items-center justify-center cursor-pointer" style={{ height: 38, border: fase === "ALEATORIO" ? "1.5px solid #FACC15" : "1px solid #333" }}>
+            <div onClick={() => handleFilterToggleClick(fase, "ALEATORIO", "ALEATORIO", (v) => { setFase(v); setSpotIndex(1); resetHuSession(); })} className="rounded-md flex items-center justify-center cursor-pointer" style={{ height: 38, border: fase === "ALEATORIO" ? "1.5px solid #FACC15" : "1.5px solid #333" }}>
               <div style={{ fontSize: 11, color: "#FACC15", fontWeight: 900, lineHeight: 1.1 }}>ALEATÓRIO</div>
             </div>
             {FASES.map((f) => {
               const active = fase === f.key;
               return (
-                <div key={f.key} onClick={() => handleFilterToggleClick(fase, "ALEATORIO", f.key, (v) => { setFase(v); setSpotIndex(1); resetHuSession(); })} className="rounded-md flex items-center justify-center cursor-pointer" style={{ height: 38, border: active ? "1.5px solid #FACC15" : "1px solid #333" }}>
+                <div key={f.key} onClick={() => handleFilterToggleClick(fase, "ALEATORIO", f.key, (v) => { setFase(v); setSpotIndex(1); resetHuSession(); })} className="rounded-md flex items-center justify-center cursor-pointer" style={{ height: 38, border: active ? "1.5px solid #FACC15" : "1.5px solid #333" }}>
                   <div style={{ fontSize: 11, color: "#FACC15", fontWeight: 900, lineHeight: 1.1 }}>{faseDisplayLabel(f.key)}</div>
                 </div>
               );
@@ -4543,14 +4543,14 @@ export default function App() {
             (mesmo wrapper de opacidade, desativado junto quando um TREINO ESPECÍFICO está
             ativo). O botão ALEATÓRIO ocupa a linha inteira, acima da grade 3x3 de profundidades. */}
         <ConfigPanel open={openConfigPanel === "stack"} onToggle={() => setOpenConfigPanel((value) => value === "stack" ? null : "stack")} title="TREINO POR STACK" summary={!stackFilter ? "INATIVO" : stackFilter === "ALEATORIO" ? "ALEATÓRIO" : `${stackFilter} BB`}>
-          <div onClick={() => handleFilterToggleClick(stackFilter, "ALEATORIO", "ALEATORIO", (v) => { setStackFilter(v); setSpotIndex(1); resetHuSession(); })} className="rounded-md flex items-center justify-center cursor-pointer" style={{ height: 38, border: stackFilter === "ALEATORIO" ? "1.5px solid #FACC15" : "1px solid #333" }}>
+          <div onClick={() => handleFilterToggleClick(stackFilter, "ALEATORIO", "ALEATORIO", (v) => { setStackFilter(v); setSpotIndex(1); resetHuSession(); })} className="rounded-md flex items-center justify-center cursor-pointer" style={{ height: 38, border: stackFilter === "ALEATORIO" ? "1.5px solid #FACC15" : "1.5px solid #333" }}>
             <div style={{ fontSize: 11, color: "#FACC15", fontWeight: 900, lineHeight: 1.1 }}>ALEATÓRIO</div>
           </div>
           <div className="grid grid-cols-3" style={{ gap: 8 }}>
             {STACK_OPTIONS.map((bb) => {
               const active = stackFilter === bb;
               return (
-                <div key={bb} onClick={() => handleFilterToggleClick(stackFilter, "ALEATORIO", bb, (v) => { setStackFilter(v); setSpotIndex(1); resetHuSession(); })} className="rounded-md flex items-center justify-center cursor-pointer" style={{ height: 38, border: active ? "1.5px solid #FACC15" : "1px solid #333" }}>
+                <div key={bb} onClick={() => handleFilterToggleClick(stackFilter, "ALEATORIO", bb, (v) => { setStackFilter(v); setSpotIndex(1); resetHuSession(); })} className="rounded-md flex items-center justify-center cursor-pointer" style={{ height: 38, border: active ? "1.5px solid #FACC15" : "1.5px solid #333" }}>
                   <div style={{ fontSize: 11, color: "#FACC15", fontWeight: 900, lineHeight: 1.1 }}>{bb} BB</div>
                 </div>
               );
@@ -4566,7 +4566,7 @@ export default function App() {
               const pp = Math.min(historyByPreset[p.key] || 0, spotsPerFase); // dado real do histórico
               const pct = ((pp / spotsPerFase) * 100).toFixed(0);
               return (
-                <div key={p.key} onClick={() => handlePresetLockedClick(p)} className="rounded-md flex flex-col items-center justify-center cursor-pointer" style={{ height: 56, border: activePresetKey === p.key ? "1.5px solid #A855F7" : "1px solid #333", opacity: activePresetKey !== p.key ? 0.35 : 1 }}>
+                <div key={p.key} onClick={() => handlePresetLockedClick(p)} className="rounded-md flex flex-col items-center justify-center cursor-pointer" style={{ height: 56, border: activePresetKey === p.key ? "1.5px solid #A855F7" : "1.5px solid #333", opacity: activePresetKey !== p.key ? 0.35 : 1 }}>
                   <div style={{ fontSize: 11, color: "#D8B4FE", fontWeight: 900 }}>{p.label}</div>
                   <div style={{ fontSize: 11, fontWeight: 800 }}>{String(pp).padStart(3,"0")}/{spotsPerFase}</div>
                   <div style={{ fontSize: 11, color: "#6B7280" }}>SPOTS - {pct}%</div>
@@ -4579,7 +4579,7 @@ export default function App() {
               const pp = Math.min(historyByPreset[p.key] || 0, spotsPerFase); // dado real do histórico
               const pct = ((pp / spotsPerFase) * 100).toFixed(0);
               return (
-                <div key={p.key} onClick={() => handlePresetLockedClick(p)} className="rounded-md flex flex-col items-center justify-center cursor-pointer" style={{ height: 56, border: activePresetKey === p.key ? "1.5px solid #A855F7" : "1px solid #333", opacity: activePresetKey !== p.key ? 0.35 : 1 }}>
+                <div key={p.key} onClick={() => handlePresetLockedClick(p)} className="rounded-md flex flex-col items-center justify-center cursor-pointer" style={{ height: 56, border: activePresetKey === p.key ? "1.5px solid #A855F7" : "1.5px solid #333", opacity: activePresetKey !== p.key ? 0.35 : 1 }}>
                   <div style={{ fontSize: 11, color: "#D8B4FE", fontWeight: 900 }}>{p.label}</div>
                   <div style={{ fontSize: 11, fontWeight: 800 }}>{String(pp).padStart(3,"0")}/{spotsPerFase}</div>
                   <div style={{ fontSize: 11, color: "#6B7280" }}>SPOTS - {pct}%</div>
@@ -4592,7 +4592,7 @@ export default function App() {
               const pp = Math.min(historyByPreset[p.key] || 0, spotsPerFase); // dado real do histórico
               const pct = ((pp / spotsPerFase) * 100).toFixed(0);
               return (
-                <div key={p.key} onClick={() => handlePresetLockedClick(p)} className="rounded-md flex flex-col items-center justify-center cursor-pointer" style={{ height: 56, border: activePresetKey === p.key ? "1.5px solid #A855F7" : "1px solid #333", opacity: activePresetKey !== p.key ? 0.35 : 1 }}>
+                <div key={p.key} onClick={() => handlePresetLockedClick(p)} className="rounded-md flex flex-col items-center justify-center cursor-pointer" style={{ height: 56, border: activePresetKey === p.key ? "1.5px solid #A855F7" : "1.5px solid #333", opacity: activePresetKey !== p.key ? 0.35 : 1 }}>
                   <div style={{ fontSize: 11, color: "#D8B4FE", fontWeight: 900 }}>{p.label}</div>
                   <div style={{ fontSize: 11, fontWeight: 800 }}>{String(pp).padStart(3,"0")}/{spotsPerFase}</div>
                   <div style={{ fontSize: 11, color: "#6B7280" }}>SPOTS - {pct}%</div>
@@ -4605,7 +4605,7 @@ export default function App() {
               const pp = Math.min(historyByPreset[p.key] || 0, spotsPerFase);
               const pct = ((pp / spotsPerFase) * 100).toFixed(0);
               return (
-                <div key={p.key} onClick={() => handlePresetLockedClick(p)} className="rounded-md flex flex-col items-center justify-center cursor-pointer" style={{ height: 56, border: activePresetKey === p.key ? "1.5px solid #A855F7" : "1px solid #333", opacity: activePresetKey !== p.key ? 0.35 : 1 }}>
+                <div key={p.key} onClick={() => handlePresetLockedClick(p)} className="rounded-md flex flex-col items-center justify-center cursor-pointer" style={{ height: 56, border: activePresetKey === p.key ? "1.5px solid #A855F7" : "1.5px solid #333", opacity: activePresetKey !== p.key ? 0.35 : 1 }}>
                   <div style={{ fontSize: 11, color: "#D8B4FE", fontWeight: 900 }}>{p.label}</div>
                   <div style={{ fontSize: 11, fontWeight: 800 }}>{String(pp).padStart(3,"0")}/{spotsPerFase}</div>
                   <div style={{ fontSize: 11, color: "#6B7280" }}>SPOTS - {pct}%</div>
@@ -4618,7 +4618,7 @@ export default function App() {
               const pp = Math.min(historyByPreset[p.key] || 0, spotsPerFase);
               const pct = ((pp / spotsPerFase) * 100).toFixed(0);
               return (
-                <div key={p.key} onClick={() => handlePresetLockedClick(p)} className="rounded-md flex flex-col items-center justify-center cursor-pointer" style={{ height: 56, border: activePresetKey === p.key ? "1.5px solid #A855F7" : "1px solid #333", opacity: activePresetKey !== p.key ? 0.35 : 1 }}>
+                <div key={p.key} onClick={() => handlePresetLockedClick(p)} className="rounded-md flex flex-col items-center justify-center cursor-pointer" style={{ height: 56, border: activePresetKey === p.key ? "1.5px solid #A855F7" : "1.5px solid #333", opacity: activePresetKey !== p.key ? 0.35 : 1 }}>
                   <div style={{ fontSize: 11, color: "#D8B4FE", fontWeight: 900 }}>{p.label}</div>
                   <div style={{ fontSize: 11, fontWeight: 800 }}>{String(pp).padStart(3,"0")}/{spotsPerFase}</div>
                   <div style={{ fontSize: 11, color: "#6B7280" }}>SPOTS - {pct}%</div>
@@ -4634,7 +4634,7 @@ export default function App() {
               style={{
                 height: 38,
                 padding: "2px 4px",
-                border: `${activePresetKey === null ? "2.5px" : "1.5px"} solid ${TRAINING_ESPECIFICO_COLOR}`,
+                border: `1.5px solid ${TRAINING_ESPECIFICO_COLOR}`,
                 opacity: activePresetKey !== null ? 0.35 : 1,
               }}
             >
@@ -4650,7 +4650,7 @@ export default function App() {
                   style={{
                     height: 38,
                     padding: "2px 4px",
-                    border: `${selected ? "2.5px" : "1.5px"} solid ${TRAINING_ESPECIFICO_COLOR}`,
+                    border: `1.5px solid ${TRAINING_ESPECIFICO_COLOR}`,
                     opacity: !selected ? 0.35 : 1,
                   }}
                 >
@@ -4664,7 +4664,7 @@ export default function App() {
         )}
 
         {sessionCompleteNotice && (
-          <div className="rounded-md flex flex-col items-center justify-center text-center gap-2" style={{ border: "1.5px solid #A855F7", boxShadow: "0 0 14px rgba(168,85,247,0.4)", background: "rgba(168,85,247,0.08)", padding: 10 }}>
+          <div className="rounded-md flex flex-col items-center justify-center text-center gap-2" style={{ border: "1.5px solid #A855F7", boxShadow: "0 0 14px rgba(168,85,247,0.4)", padding: 10 }}>
             <div style={{ fontSize: 11, fontWeight: 900, color: "#D8B4FE", letterSpacing: "0.1em" }}>SESSÃO CONCLUÍDA</div>
             <div style={{ fontSize: 11, color: "#E9D5FF" }}>Bateu a meta de spots{activePreset ? ` de ${activePreset.label}` : ""}. Vale a pena ver onde os leaks estão antes de seguir treinando.</div>
             <button onClick={() => { setHistoryPanelOpen(true); runAiReport(); }} className="rounded-md" style={{ height: 34, width: "100%", border: "1.5px solid #A855F7", color: "#FFF", background: "rgba(168,85,247,0.3)", fontWeight: 900, fontSize: 11 }}>
@@ -4676,7 +4676,7 @@ export default function App() {
         {/* INFORMAÇÕES DO TREINO — resumo do que está selecionado agora (fase/street/posição
             combinados, ou o treino específico ativo, que sempre tem prioridade sobre os
             outros três) e quantos spots já foram feitos dentro dessa combinação exata. */}
-        <div className="rounded-md" style={{ width: "100%", border: "1.5px solid #FACC15", background: "rgba(113,63,18,0.1)", padding: "8px 10px", textAlign: "center" }}>
+        <div className="rounded-md" style={{ width: "100%", border: "1.5px solid #FACC15", padding: "8px 10px", textAlign: "center" }}>
           <div style={{ color: "#FACC15", fontSize: 11, fontWeight: 900, letterSpacing: "0.1em" }}>INFORMAÇÕES DO TREINO</div>
           <div style={{ color: "#FFF", fontSize: 11, fontWeight: 800, marginTop: 4 }}>
             {activePreset
@@ -4697,13 +4697,13 @@ export default function App() {
         </div>
 
         <div className="grid grid-cols-3 gap-2">
-          <button onClick={actionFlowEnabled ? endActionSequence : beginActionSequence} disabled={actionStep >= 0 && !sequenceReady} className={`rounded-md ${!actionFlowEnabled ? "nlh-start-pulse" : ""}`} style={{ height: 38, border: `1.5px solid ${!actionFlowEnabled ? "#EF4444" : "#22D3EE"}`, color: !actionFlowEnabled ? "#FFF" : "#CFFAFE", background: !actionFlowEnabled ? "rgba(239,68,68,0.22)" : "rgba(6,182,212,0.12)", boxShadow: !actionFlowEnabled ? "0 0 14px rgba(239,68,68,0.75), 0 0 26px rgba(239,68,68,0.35)" : "0 0 10px rgba(6,182,212,0.3)", fontWeight: 900, fontSize: 11, opacity: actionStep >= 0 && !sequenceReady ? 0.55 : 1 }}>
+          <button onClick={actionFlowEnabled ? endActionSequence : beginActionSequence} disabled={actionStep >= 0 && !sequenceReady} className={`rounded-md ${!actionFlowEnabled ? "nlh-start-pulse" : ""}`} style={{ height: 38, border: "1.5px solid #EF4444", color: "#FFF", background: !actionFlowEnabled ? "rgba(239,68,68,0.22)" : "rgba(239,68,68,0.14)", boxShadow: !actionFlowEnabled ? "0 0 14px rgba(239,68,68,0.75), 0 0 26px rgba(239,68,68,0.35)" : "0 0 10px rgba(239,68,68,0.35)", fontWeight: 900, fontSize: 11, opacity: actionStep >= 0 && !sequenceReady ? 0.55 : 1 }}>
             {actionStep >= 0 && !sequenceReady ? actionPaused ? "AÇÕES PAUSADAS" : "AÇÕES EM ANDAMENTO..." : actionFlowEnabled ? "FINALIZAR" : "INICIAR"}
           </button>
-          <button onClick={repeatSpots} disabled={actionStep >= 0 && !sequenceReady} className="rounded-md" style={{ height: 38, border: "1.5px solid #FACC15", color: "#FDE68A", background: "transparent", boxShadow: "0 0 10px rgba(250,204,21,0.35)", fontWeight: 900, fontSize: 11, opacity: actionStep >= 0 && !sequenceReady ? 0.55 : 1 }}>
+          <button onClick={repeatSpots} disabled={actionStep >= 0 && !sequenceReady} className="rounded-md" style={{ height: 38, border: "1.5px solid #EF4444", color: "#FCA5A5", background: "transparent", boxShadow: "0 0 10px rgba(239,68,68,0.35)", fontWeight: 900, fontSize: 11, opacity: actionStep >= 0 && !sequenceReady ? 0.55 : 1 }}>
             REPETIR SPOTS
           </button>
-          <button onClick={() => setSoundEnabled((v) => !v)} className="rounded-md" style={{ height: 38, border: "1.5px solid #3B82F6", color: "#93C5FD", background: soundEnabled ? "rgba(59,130,246,0.14)" : "transparent", boxShadow: "0 0 10px rgba(59,130,246,0.35)", fontWeight: 900, fontSize: 11 }}>
+          <button onClick={() => setSoundEnabled((v) => !v)} className="rounded-md" style={{ height: 38, border: "1.5px solid #EF4444", color: "#FCA5A5", background: soundEnabled ? "rgba(239,68,68,0.14)" : "transparent", boxShadow: "0 0 10px rgba(239,68,68,0.35)", fontWeight: 900, fontSize: 11 }}>
             {soundEnabled ? "🔊 SOM" : "🔇 SOM"}
           </button>
         </div>
@@ -4724,7 +4724,7 @@ export default function App() {
           )}
         </div>
 
-        <div ref={potSectionRef} className="rounded-md flex flex-col items-center justify-center" style={{ width: "100%", height: 85, position: "relative", scrollMarginTop: 6, border: "1.5px solid #22C55E", background: "rgba(6,78,59,0.22)", boxShadow: "inset 0 0 16px rgba(34,197,94,0.14), 0 0 10px rgba(34,197,94,0.16)", padding: "7px 8px", textAlign: "center" }}>
+        <div ref={potSectionRef} className="rounded-md flex flex-col items-center justify-center" style={{ width: "100%", height: 85, position: "relative", scrollMarginTop: 6, border: "1.5px solid #22C55E", boxShadow: "inset 0 0 16px rgba(34,197,94,0.14), 0 0 10px rgba(34,197,94,0.16)", padding: "7px 8px", textAlign: "center" }}>
           <div style={{ color: "#4ADE80", fontSize: 11, fontWeight: 900 }}>POT</div>
           {torneioMode && torneioContext ? (
             <div style={{ color: "#FFF", fontSize: 11, fontWeight: 900 }}>{fmtChips(Math.round(torneioContext.potBB * (torneioInfo?.bb || 0)))} • {torneioContext.potBB.toFixed(1)} BB</div>
@@ -4797,7 +4797,7 @@ export default function App() {
             // street — verde pré-flop, azul flop, laranja turn, vermelho river.
             const boardStreetColor = streetBadgeColor(spot.street);
             return (
-              <div ref={boardSectionRef} className="rounded-md flex flex-col items-center justify-center" style={{ minWidth: 0, position: "relative", height: 65, scrollMarginTop: 6, border: `1.5px solid ${boardStreetColor}`, boxShadow: `0 0 16px ${boardStreetColor}80, 0 0 28px ${boardStreetColor}40`, background: `${boardStreetColor}0F`, padding: "8px 0", textAlign: "center" }}>
+              <div ref={boardSectionRef} className="rounded-md flex flex-col items-center justify-center" style={{ minWidth: 0, position: "relative", height: 65, scrollMarginTop: 6, border: `1.5px solid ${boardStreetColor}`, boxShadow: `0 0 16px ${boardStreetColor}80, 0 0 28px ${boardStreetColor}40`, padding: "8px 0", textAlign: "center" }}>
                 {(torneioMode ? false : actionFlowEnabled && spot.board.length > 0) && (
                   <div style={{ fontSize: 11, fontWeight: 900, color: boardStreetColor, letterSpacing: "0.25em", lineHeight: 1.1 }}>{STREET_LABEL_PT[spot.street] || spot.street}</div>
                 )}
@@ -4818,7 +4818,7 @@ export default function App() {
             const heroPos = torneioMode ? torneioContext?.position : (actionFlowEnabled ? spot.heroPosition : null);
             const heroPositionColor = positionBadgeColor(heroPos) || "#3B82F6";
             return (
-              <div className="rounded-md flex flex-col items-center justify-center" style={{ minWidth: 0, position: "relative", height: 65, border: `1.5px solid ${heroPositionColor}`, background: `${heroPositionColor}29`, boxShadow: `0 0 14px ${heroPositionColor}61, inset 0 0 12px ${heroPositionColor}1F`, padding: "3px 8px", textAlign: "center" }}>
+              <div className="rounded-md flex flex-col items-center justify-center" style={{ minWidth: 0, position: "relative", height: 65, border: `1.5px solid ${heroPositionColor}`, boxShadow: `0 0 14px ${heroPositionColor}61, inset 0 0 12px ${heroPositionColor}1F`, padding: "3px 8px", textAlign: "center" }}>
                 <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 4 }}>
                   <span style={{ color: "#FFF", fontSize: 11, fontWeight: 900, letterSpacing: "0.12em" }}>HERÓI</span>
                   <span className="rounded" style={{ color: heroPositionColor, border: `1px solid ${heroPositionColor}`, background: `${heroPositionColor}18`, padding: "1px 5px", fontSize: 10, fontWeight: 900 }}>{heroPos || "—"}</span>
@@ -4848,7 +4848,7 @@ export default function App() {
         </div>
 
         {torneioMode && torneioContext && (
-          <div className="rounded-md" style={{ width: "100%", border: "1.5px solid #FACC15", background: "rgba(113,63,18,0.1)", padding: "6px 8px" }}>
+          <div className="rounded-md" style={{ width: "100%", border: "1.5px solid #FACC15", padding: "6px 8px" }}>
             <div style={{ color: "#FACC15", fontSize: 11, fontWeight: 900, textAlign: "center" }}>
               {torneioContext.position} · pote {torneioContext.potBB.toFixed(1)}BB · pagar {torneioContext.toCallBB.toFixed(1)}BB
               {!torneioContext.canRaise && <span style={{ color: "#FCA5A5" }}> · all-in incompleto: só pagar ou foldar</span>}
@@ -4858,7 +4858,7 @@ export default function App() {
 
 
         {spot.hasMultiShove && (
-          <div className="rounded-md" style={{ border: "1.5px solid #3B82F6", background: "rgba(15,23,42,0.82)", padding: 7, boxShadow: "0 0 10px rgba(59,130,246,0.18)" }}>
+          <div className="rounded-md" style={{ border: "1.5px solid #3B82F6", padding: 7, boxShadow: "0 0 10px rgba(59,130,246,0.18)" }}>
             <div style={{ color: "#93C5FD", fontSize: 11, fontWeight: 900, textAlign: "center", marginBottom: 6, letterSpacing: "0.08em" }}>SHOVE POTS</div>
             <div style={{ display: "grid", gridTemplateColumns: "repeat(2, minmax(0, 1fr))", gap: 8 }}>
               {animatedPotBreakdown.pots.map((potLayer, potIndex) => {
@@ -4911,7 +4911,6 @@ export default function App() {
                   display: "flex",
                   flexDirection: "column",
                   justifyContent: "space-between",
-                  background: "#000",
                 }}>
                   <div style={{ display: "flex", gap: 8, width: "100%" }}>
                     <div className="rounded" style={{ flex: 1, minWidth: 0, color: positionBadgeColor(p.pos) || seatColor(p), border: `1px solid ${positionBadgeColor(p.pos) || seatColor(p)}`, background: `${positionBadgeColor(p.pos) || seatColor(p)}18`, textAlign: "center", padding: "3px 4px", fontSize: 11, fontWeight: 900 }}>{p.pos}</div>
@@ -4929,7 +4928,7 @@ export default function App() {
             // perto da borda esquerda) e saiu das linhas individuais dos jogadores.
             const playersStreetColor = streetBadgeColor(spot.street);
             return (
-              <div className="rounded-md" style={{ border: `1.5px solid ${playersStreetColor}`, background: "rgba(15,23,42,0.82)", boxShadow: `0 0 10px ${playersStreetColor}2E`, padding: 7 }}>
+              <div className="rounded-md" style={{ border: `1.5px solid ${playersStreetColor}`, boxShadow: `0 0 10px ${playersStreetColor}2E`, padding: 7 }}>
                 {/* Badge de street fica ancorado na borda esquerda (position: absolute) pra não
                     deslocar o título — "JOGADORES COM AÇÃO" fica centralizado na linha inteira do
                     card, não apenas no espaço que sobra depois do badge. */}
@@ -5021,7 +5020,7 @@ export default function App() {
               handleAction(b.key, event.timeStamp);
             };
             return (
-              <button key={b.key} disabled={blocked} onClick={handleClick} className="rounded-md flex flex-col items-center justify-center" style={{ height: 38, border: `1px solid ${buttonColor}`, color: "#FFF", background: "#000", boxShadow: chosen ? `0 0 16px ${b.color}` : !isTorneioDecision && rigorMode && !decision ? "none" : `0 0 8px ${b.color}55`, opacity: isTorneioDecision ? (blocked ? 0.25 : 1) : (!!b.disabled || !sequenceReady || (currentSpotIsLocked && !chosen) ? 0.25 : 1), fontWeight: 900, fontSize: 11, lineHeight: 1.25, cursor: blocked ? "not-allowed" : "pointer" }}>
+              <button key={b.key} disabled={blocked} onClick={handleClick} className="rounded-md flex flex-col items-center justify-center" style={{ height: 38, border: `1.5px solid ${buttonColor}`, color: "#FFF", background: "#000", boxShadow: chosen ? `0 0 16px ${b.color}` : !isTorneioDecision && rigorMode && !decision ? "none" : `0 0 8px ${b.color}55`, opacity: isTorneioDecision ? (blocked ? 0.25 : 1) : (!!b.disabled || !sequenceReady || (currentSpotIsLocked && !chosen) ? 0.25 : 1), fontWeight: 900, fontSize: 11, lineHeight: 1.25, cursor: blocked ? "not-allowed" : "pointer" }}>
                 <div>{b.label}</div>
                 {b.value && <div style={{ fontSize: 10, fontWeight: 700, opacity: 0.85 }}>{b.value}</div>}
               </button>
@@ -5080,21 +5079,21 @@ export default function App() {
         <div className="rounded-md flex flex-col gap-2 p-2" style={{ border: "1.5px solid #3B82F6", boxShadow: "0 0 12px rgba(59,130,246,0.3)", textAlign: "center" }}>
           <div style={{ fontSize: 11, color: "#93C5FD", fontWeight: 900, letterSpacing: "0.1em" }}>DESEMPENHO</div>
           <div className="grid grid-cols-3 gap-2">
-            <div className="rounded-md flex flex-col items-center justify-center" style={{ minHeight: 92, border: "1.5px solid #3B82F6", boxShadow: "0 0 12px rgba(59,130,246,0.3)", background: "#000", padding: "6px 2px" }}>
+            <div className="rounded-md flex flex-col items-center justify-center" style={{ minHeight: 92, border: "1.5px solid #3B82F6", boxShadow: "0 0 12px rgba(59,130,246,0.3)", padding: "6px 2px" }}>
               <div style={{ color: "#93C5FD", fontWeight: 900, fontSize: 11, letterSpacing: "0.05em" }}>ACERTOS</div>
               <div style={{ color: "#FFF", fontWeight: 900, fontSize: 11, lineHeight: 1.5 }}>{String(partialCorrect).padStart(5,"0")}</div>
               <div style={{ color: "#6B7280", fontWeight: 700, fontSize: 11, lineHeight: 1.5 }}>{partialAccuracyPct.replace(".", ",")}%</div>
               <div style={{ color: "#FFF", fontWeight: 900, fontSize: 11, lineHeight: 1.5 }}>{String(totalCorrect).padStart(5,"0")}</div>
               <div style={{ color: "#6B7280", fontWeight: 700, fontSize: 11, lineHeight: 1.5 }}>{totalAccuracyPct.replace(".", ",")}%</div>
             </div>
-            <div className="rounded-md flex flex-col items-center justify-center" style={{ minHeight: 92, border: "1.5px solid #3B82F6", boxShadow: "0 0 12px rgba(59,130,246,0.3)", background: "#000", padding: "6px 2px" }}>
+            <div className="rounded-md flex flex-col items-center justify-center" style={{ minHeight: 92, border: "1.5px solid #3B82F6", boxShadow: "0 0 12px rgba(59,130,246,0.3)", padding: "6px 2px" }}>
               <div style={{ color: "#93C5FD", fontWeight: 900, fontSize: 11, letterSpacing: "0.05em" }}>REALIZADOS</div>
               <div style={{ color: "#FFF", fontWeight: 900, fontSize: 11, lineHeight: 1.5 }}>{String(partialRealized).padStart(5,"0")}</div>
               <div style={{ color: "#6B7280", fontWeight: 700, fontSize: 11, lineHeight: 1.5 }}>{partialCompletionPct.replace(".", ",")}%</div>
               <div style={{ color: "#FFF", fontWeight: 900, fontSize: 11, lineHeight: 1.5 }}>{String(totalRealized).padStart(5,"0")}</div>
               <div style={{ color: "#6B7280", fontWeight: 700, fontSize: 11, lineHeight: 1.5 }}>{totalCompletionPct.replace(".", ",")}%</div>
             </div>
-            <div className="rounded-md flex flex-col items-center justify-center" style={{ minHeight: 92, border: "1.5px solid #3B82F6", boxShadow: "0 0 12px rgba(59,130,246,0.3)", background: "#000", padding: "6px 2px" }}>
+            <div className="rounded-md flex flex-col items-center justify-center" style={{ minHeight: 92, border: "1.5px solid #3B82F6", boxShadow: "0 0 12px rgba(59,130,246,0.3)", padding: "6px 2px" }}>
               <div style={{ color: "#93C5FD", fontWeight: 900, fontSize: 11, letterSpacing: "0.05em" }}>SPOTS</div>
               <div style={{ color: "#FFF", fontWeight: 900, fontSize: 11, lineHeight: 1.5 }}>{String(spotsCurrentTarget).padStart(5,"0")}</div>
               <div style={{ color: "#6B7280", fontWeight: 700, fontSize: 11, lineHeight: 1.5 }}>{spotsCurrentPct.replace(".", ",")}%</div>
@@ -5230,7 +5229,7 @@ export default function App() {
               separado), e separado do relatório geral/histórico de revisão do resto do app.
               Só aparece depois que o torneio termina de verdade (bust ou campeão). */}
           {torneioReport && (
-            <div className="rounded-md" style={{ width: "100%", border: "1.5px solid #22C55E", background: "rgba(20,60,38,0.14)", padding: "9px 10px" }}>
+            <div className="rounded-md" style={{ width: "100%", border: "1.5px solid #22C55E", padding: "9px 10px" }}>
               <div style={{ height: 35, display: "flex", alignItems: "center", justifyContent: "center", color: "#22C55E", fontSize: 11, fontWeight: 900, letterSpacing: "0.1em" }}>RELATÓRIO DO TORNEIO</div>
               <div style={{ fontSize: 11, fontWeight: 700, color: "#DCFCE7", lineHeight: 1.5, whiteSpace: "pre-line" }}>
                 {formatTournamentReportText(torneioReport)}
@@ -5271,7 +5270,7 @@ export default function App() {
             sempre que existir pelo menos um torneio já registrado, dentro ou fora do Modo
             Torneio. */}
         {totalTournamentsPlayed(torneioRankingHistogram) > 0 && (
-          <div className="rounded-md" style={{ width: "100%", border: "1.5px solid #22C55E", background: "rgba(20,60,38,0.1)", padding: "8px 10px" }}>
+          <div className="rounded-md" style={{ width: "100%", border: "1.5px solid #22C55E", padding: "8px 10px" }}>
             <div style={{ height: 35, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
               <span style={{ color: "#22C55E", fontSize: 11, fontWeight: 900, letterSpacing: "0.1em" }}>HISTÓRICO DE TORNEIOS</span>
               <span style={{ color: "#94A3B8", fontSize: 10, fontWeight: 800 }}>{totalTournamentsPlayed(torneioRankingHistogram)} JOGADOS</span>
@@ -5288,7 +5287,7 @@ export default function App() {
         )}
 
         {torneioMode && torneioInfo && (
-          <div className="rounded-md" style={{ width: "100%", border: "1.5px solid #22C55E", background: "rgba(20,60,38,0.18)", boxShadow: "0 0 14px rgba(34,197,94,0.35), inset 0 0 12px rgba(34,197,94,0.1)", padding: "8px 10px" }}>
+          <div className="rounded-md" style={{ width: "100%", border: "1.5px solid #22C55E", boxShadow: "0 0 14px rgba(34,197,94,0.35), inset 0 0 12px rgba(34,197,94,0.1)", padding: "8px 10px" }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 4 }}>
               <span style={{ color: "#22C55E", fontSize: 11, fontWeight: 900, letterSpacing: "0.1em" }}>MODO TORNEIO</span>
               <span style={{ color: "#4ADE80", fontSize: 11, fontWeight: 900 }}>ATIVADO</span>
@@ -5322,7 +5321,7 @@ export default function App() {
           {/* Relatório da prova — DENTRO da gaveta de Modo Prova (mesmo padrão do relatório do
               Modo Torneio, que também vive dentro da própria gaveta de configuração). */}
           {examReport && (
-            <div className="rounded-md" style={{ border: "1.5px solid #22C55E", background: "rgba(6,78,59,0.18)", padding: 8, marginTop: 2 }}>
+            <div className="rounded-md" style={{ border: "1.5px solid #22C55E", padding: 8, marginTop: 2 }}>
               <div style={{ color: "#22C55E", fontSize: 11, fontWeight: 900, textAlign: "center", marginBottom: 7 }}>RELATÓRIO DA PROVA · {examReport.count} SPOTS</div>
               <div className="grid grid-cols-3 gap-2">
                 {[['PRECISÃO', `${examReport.accuracy.toFixed(1).replace('.', ',')}%`], ['EV PERDIDO', `${examReport.totalLoss.toFixed(2).replace('.', ',')} BB`], ['TEMPO MÉDIO', `${examReport.avgTime.toFixed(1).replace('.', ',')} S`]].map(([label, value]) => <div key={label} className="rounded" style={{ border: "1px solid #22C55E", padding: 6, textAlign: "center" }}><div style={{ color: "#22C55E", fontSize: 10, fontWeight: 900 }}>{label}</div><div style={{ color: "#FFF", fontSize: 13, fontWeight: 900 }}>{value}</div></div>)}
@@ -5360,7 +5359,7 @@ export default function App() {
               <div style={{ fontSize: 11, fontWeight: 900, color: "#67E8F9" }}>
                 TOTAL: {history.length} SPOTS • ACERTOS: {history.filter((h) => h.correct).length} ({history.length > 0 ? ((history.filter((h) => h.correct).length / history.length) * 100).toFixed(1) : "0.0"}%)
               </div>
-              <button onClick={clearHistory} disabled={history.length === 0} className="rounded-md" style={{ height: 28, minWidth: 84, border: "1px solid #EF4444", color: "#FCA5A5", background: "rgba(239,68,68,0.1)", fontWeight: 900, fontSize: 11, opacity: history.length === 0 ? 0.35 : 1, cursor: history.length === 0 ? "not-allowed" : "pointer" }}>
+              <button onClick={clearHistory} disabled={history.length === 0} className="rounded-md" style={{ height: 28, minWidth: 84, border: "1.5px solid #EF4444", color: "#FCA5A5", background: "rgba(239,68,68,0.1)", fontWeight: 900, fontSize: 11, opacity: history.length === 0 ? 0.35 : 1, cursor: history.length === 0 ? "not-allowed" : "pointer" }}>
                 LIMPAR
               </button>
             </div>
@@ -5378,20 +5377,20 @@ export default function App() {
               type="email" placeholder="SEU E-MAIL" value={userEmail}
               onChange={(e) => updateContactField(e.target.value, userWhatsapp)}
               onBlur={persistContacts}
-              style={{ height: 38, background: "#000", border: "1px solid #06B6D4", borderRadius: 6, color: "#FFF", fontSize: 11, padding: "0 8px" }}
+              style={{ height: 38, background: "#000", border: "1.5px solid #06B6D4", borderRadius: 6, color: "#FFF", fontSize: 11, padding: "0 8px" }}
             />
             <input
               type="tel" placeholder="SEU WHATSAPP (COM DDD)" value={userWhatsapp}
               onChange={(e) => updateContactField(userEmail, e.target.value)}
               onBlur={persistContacts}
-              style={{ height: 38, background: "#000", border: "1px solid #06B6D4", borderRadius: 6, color: "#FFF", fontSize: 11, padding: "0 8px" }}
+              style={{ height: 38, background: "#000", border: "1.5px solid #06B6D4", borderRadius: 6, color: "#FFF", fontSize: 11, padding: "0 8px" }}
             />
 
             <div className="grid grid-cols-2 gap-2">
-              <button onClick={sendHistoryWhatsapp} disabled={history.length === 0} className="rounded-md" style={{ height: 44, border: "1px solid #22C55E", color: "#86EFAC", background: "rgba(34,197,94,0.1)", fontWeight: 900, fontSize: 11, opacity: history.length === 0 ? 0.4 : 1 }}>
+              <button onClick={sendHistoryWhatsapp} disabled={history.length === 0} className="rounded-md" style={{ height: 44, border: "1.5px solid #22C55E", color: "#86EFAC", background: "rgba(34,197,94,0.1)", fontWeight: 900, fontSize: 11, opacity: history.length === 0 ? 0.4 : 1 }}>
                 ENVIAR POR WHATSAPP
               </button>
-              <button onClick={sendHistoryEmail} disabled={history.length === 0} className="rounded-md" style={{ height: 44, border: "1px solid #3B82F6", color: "#93C5FD", background: "rgba(59,130,246,0.1)", fontWeight: 900, fontSize: 11, opacity: history.length === 0 ? 0.4 : 1 }}>
+              <button onClick={sendHistoryEmail} disabled={history.length === 0} className="rounded-md" style={{ height: 44, border: "1.5px solid #3B82F6", color: "#93C5FD", background: "rgba(59,130,246,0.1)", fontWeight: 900, fontSize: 11, opacity: history.length === 0 ? 0.4 : 1 }}>
                 ENVIAR POR E-MAIL
               </button>
             </div>

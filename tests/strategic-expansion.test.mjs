@@ -96,9 +96,9 @@ test("hidratação e revisão de mão preservam todos os cliques", () => {
   assert.match(source, /window\.setTimeout\(\(\) => setActionStep\(0\), 220\)/);
 });
 
-test("título usa o mesmo ciano da borda e fundo translúcido", () => {
+test("título usa o mesmo ciano da borda, sem fundo (cards do app ficaram só com borda)", () => {
   const source = fs.readFileSync(new URL("../app/Trainer.jsx", import.meta.url), "utf8");
-  assert.match(source, /color: "#22D3EE", border: "2px solid #22D3EE", background: "rgba\(6,182,212,0\.18\)"/);
+  assert.match(source, /color: "#22D3EE", border: "1\.5px solid #22D3EE"/);
 });
 
 test("tipografia do aplicativo foi reduzida globalmente em um pixel", () => {
