@@ -65,7 +65,19 @@ function sessionIndex(displayIdx, bankLength, sessionStart, sessionStepRaw) {
   while (gcd(step, bankLength) !== 1) step = (step % (bankLength - 1)) + 1;
   return (((sessionStart + displayIdx * step) % bankLength) + bankLength) % bankLength;
 }
+// GERAÇÃO DE SPOTS POR IA (opcional, ver buildAiSelectedEntry mais abaixo): quando cfg.forcedEntry
+// vem preenchido, a IA já escolheu um registro válido (posição/cenário/bucket/mão — sempre dentro
+// das mesmas enumerações legais do banco local, nunca cartas/EV inventados por ela) e ele entra
+// aqui no lugar do passo normal de bank[virtualIndex % bank.length]. Tudo depois disso continua
+// IDÊNTICO (mesmo seedStr, mesmas tabelas de decisão determinísticas) — a IA nunca decide a ação
+// correta, só escolhe QUAL combinação visitar. virtualIndex ainda varia com cfg.spotIndex (via
+// hash) pra dar sementes diferentes em tentativas de retry (ver generateSpot) sem precisar do
+// passo coprimo, que não faz sentido pra uma entrada avulsa fora do banco.
 function selectSessionVariation(bank, cfg) {
+  if (cfg.forcedEntry) {
+    const virtualIndex = hashStr(`${cfg.forcedEntry.id || "AI-ENTRY"}|${cfg.spotIndex}`) % 1000000;
+    return { entry: cfg.forcedEntry, virtualIndex, variationIndex: 0, virtualPoolLength: Math.max(1, bank.length) };
+  }
   if (!bank.length) throw new Error("Treino sem estado estratégico compatível.");
   const virtualPoolLength = Math.max(MIN_TRAINING_VARIATIONS, Number(cfg.trainingTarget || 0), bank.length);
   const virtualIndex = sessionIndex(cfg.spotIndex - 1, virtualPoolLength, cfg.sessionStart, cfg.sessionStepRaw);
@@ -764,17 +776,35 @@ function preflopRangeDecision(state, percentile, adj) {
 // mais estreitos (uma única posição + um único cenário, ex.: BB defendendo contra um raise):
 // 169 mãos x 12 variantes = 2.028.
 const VARIANT_TAGS = ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L"];
+// Gerador de rótulo de variante SEM TETO — ao contrário de indexar um array fixo (VARIANT_TAGS,
+// 12 posições), esta função nunca devolve undefined não importa quantas variantes sejam pedidas.
+// BUG CORRIGIDO: o reforço pós-flop (POSTFLOP_BOOST_CONFIG, abaixo) pedia até 24 variantes por
+// posição indexando VARIANT_TAGS[vi] direto — a partir de vi=12 isso já devolvia `undefined`,
+// criando registros LITERALMENTE idênticos (mesma posição/cenário/bucket/spr/variant) dentro do
+// próprio banco. A[índice] em base 26 (A..Z, depois AA..AZ, BA...) resolve isso pra qualquer
+// contagem de reforço, agora ou no futuro.
+function variantTag(i) {
+  let n = Math.max(0, Math.floor(i)), s = "";
+  do { s = String.fromCharCode(65 + (n % 26)) + s; n = Math.floor(n / 26) - 1; } while (n >= 0);
+  return s;
+}
 // Combinações (posição+cenário) usadas pelos treinos específicos de blind — reforçadas com
 // variantes extras pra garantir 1.000+ spots reais cada, e essas mesmas entradas somam ao
-// pool geral (entram na randomização normal também).
+// pool geral (entram na randomização normal também). RFI por posição saiu daqui e virou reforço
+// geral (GENERAL_PREFLOP_BOOST_TARGETS, abaixo) — o RFI de UTG/UTG1/MP/MP1/LJ/HJ não tinha
+// NENHUM reforço antes (só 169 registros, um por mão), o pior gargalo real de "spots repetindo"
+// filtrando por essas posições (RFI tem o maior peso de sorteio no treino geral, 20%).
 const PREFLOP_BOOST_TARGETS = [
   { position: "BB", scenario: "FACING_RAISE" }, // defesa de BB (EP/MP/LP) + lado BB do blind war
-  { position: "SB", scenario: "RFI" },           // lado SB do blind war
-  { position: "CO", scenario: "RFI" },           // ataque aos blinds
-  { position: "BTN", scenario: "RFI" },          // ataque aos blinds
   { position: "CO", scenario: "FACING_RAISE" },  // flat em posição / remoção de flat
   { position: "BTN", scenario: "FACING_RAISE" }, // flat em posição / remoção de flat
 ];
+// Reforço geral de RFI: TODAS as posições (exceto BB, que nunca dá RFI) ganham a mesma
+// quantidade de variantes extras — antes só SB/CO/BTN tinham reforço (via PREFLOP_BOOST_TARGETS)
+// e as 6 posições restantes ficavam com só 169 registros (uma mão cada), o mínimo possível.
+// 20 variantes x 169 mãos = 3.380 registros de RFI por posição (era 169).
+const GENERAL_PREFLOP_BOOST_COUNT = 20;
+const GENERAL_PREFLOP_BOOST_TARGETS = POSITIONS_ORDER.filter((pos) => pos !== "BB").map((position) => ({ position, scenario: "RFI" }));
 function buildPreflopBank(faseKey) {
   const combos = [];
   for (const pos of POSITIONS_ORDER) {
@@ -845,7 +875,15 @@ function buildPreflopBank(faseKey) {
       for (const h of HAND_TYPES) combos.push({ scenario: target.scenario, position: target.position, handType: h.type, variant: VARIANT_TAGS[vi] });
     }
   }
-  const rng = mulberry32(hashStr(`${faseKey}-PREFLOP-BANK-FULL-v4`));
+  // Reforço geral de RFI (ver comentário de GENERAL_PREFLOP_BOOST_TARGETS acima) — cobre as 9
+  // posições de forma uniforme, corrigindo o gargalo real de UTG/UTG1/MP/MP1/LJ/HJ.
+  for (const target of GENERAL_PREFLOP_BOOST_TARGETS) {
+    for (let vi = 1; vi < GENERAL_PREFLOP_BOOST_COUNT; vi++) {
+      const variant = variantTag(vi);
+      for (const h of HAND_TYPES) combos.push({ scenario: target.scenario, position: target.position, handType: h.type, variant });
+    }
+  }
+  const rng = mulberry32(hashStr(`${faseKey}-PREFLOP-BANK-FULL-v5`));
   return shuffle(combos, rng);
 }
 // ---------- Construção de cartas por "bucket" de força de mão (pós-flop) ----------
@@ -1418,12 +1456,22 @@ function buildPostflopBank(faseKey, street) {
     combos.push({ position: pos, scenario, bucket, spr, variant: "MW3", participantCount: 3, preflopLevel: 2 });
     combos.push({ position: pos, scenario, bucket, spr, variant: "MW4", participantCount: 4, preflopLevel: 2 });
   }
+  // BUG CORRIGIDO: indexava VARIANT_TAGS[vi] direto — como POSTFLOP_BOOST_CONFIG pede até 24
+  // variantes (BB) e VARIANT_TAGS só tem 12, vi>=12 devolvia `undefined`, criando registros
+  // literalmente idênticos (mesma posição/cenário/bucket/spr/variant) dentro do próprio banco.
+  // Agora usa variantTag() (sem teto) e também alterna participantCount/preflopLevel entre
+  // heads-up/3-way/4-way como o laço base acima já faz — antes as variantes de reforço saíam
+  // todas heads-up (participantCount nunca era definido aqui), perdendo a variedade multiway
+  // que o laço base tem.
   for (const [pos, variantCount] of Object.entries(POSTFLOP_BOOST_CONFIG)) {
     for (let vi = 1; vi < variantCount; vi++) {
-      for (const scenario of POSTFLOP_SCENARIOS) for (const bucket of buckets) for (const spr of POSTFLOP_SPR) combos.push({ position: pos, scenario, bucket, spr, variant: VARIANT_TAGS[vi] });
+      const variant = variantTag(vi);
+      const mwSlot = vi % 3;
+      const participantCount = mwSlot === 0 ? 2 : mwSlot === 1 ? 3 : 4;
+      for (const scenario of POSTFLOP_SCENARIOS) for (const bucket of buckets) for (const spr of POSTFLOP_SPR) combos.push({ position: pos, scenario, bucket, spr, variant, participantCount, preflopLevel: 2 });
     }
   }
-  const rng = mulberry32(hashStr(`${faseKey}-${street}-BANK-FULL-v3`));
+  const rng = mulberry32(hashStr(`${faseKey}-${street}-BANK-FULL-v4`));
   return shuffle(combos, rng);
 }
 // Banco pós-flop de POTE DE 3-BET: mesma grade de posição/cenário/bucket/SPR do banco normal
@@ -1543,7 +1591,12 @@ function generatePostflopBankSpot(cfg, faseCfg, street) {
 
   const bb = faseCfg.nivel * 200, sb = faseCfg.nivel * 100;
   const fieldFactor = combinedStackFactor(cfg); // campo + modalidade combinados
-  let heroStackBB = Math.round((faseCfg.stackMin + rng() * (faseCfg.stackMax - faseCfg.stackMin)) * fieldFactor);
+  // entry.stackRange: mesmo gancho que generatePreflopBankSpot já usa — só é preenchido por
+  // registros escolhidos pela GERAÇÃO DE SPOTS POR IA (buildAiForcedEntry), nunca pelo banco
+  // local normal (que sempre varia o stack em tempo real dentro da faixa da fase).
+  let heroStackBB = entry.stackRange
+    ? Math.round(entry.stackRange[0] + rng() * (entry.stackRange[1] - entry.stackRange[0]))
+    : Math.round((faseCfg.stackMin + rng() * (faseCfg.stackMax - faseCfg.stackMin)) * fieldFactor);
   if (entry.scenario === "OPEN_SHOVE") heroStackBB = Math.min(18, Math.max(5, heroStackBB));
   if (["FACING_SHOVE", "RESHOVE"].includes(entry.scenario)) heroStackBB = Math.min(25, Math.max(8, heroStackBB));
   // TREINO POR STACK: quando o usuário escolhe uma profundidade específica, ela tem prioridade
@@ -2844,6 +2897,93 @@ async function callGemini(apiKey, prompt, image, parseMode) {
 
 const AI_CALLERS = { openai: callOpenAI, anthropic: callAnthropic, google: callGemini };
 
+// ============================================================
+// GERAÇÃO DE SPOTS POR IA (BETA) — opcional, desligada por padrão, exige provedor+chave já
+// configurados em INTEGRAR IA.
+// Regra inegociável (AGENTS.md: "nunca derive a ação correta... de IA/índice/frequência"): a IA
+// NUNCA decide a ação certa, nunca inventa cartas, EV ou textura de board. Ela só ESCOLHE, dentro
+// das mesmas enumerações legais que o banco local já usa (posição, cenário, tipo de mão ou bucket
+// de força, profundidade de stack), qual combinação visitar a seguir — a mesma tabela de decisão
+// determinística do motor estratégico (a mesma que roda pra qualquer spot do banco local) continua
+// 100% responsável pelo resto: gerar as cartas reais, calcular pot odds/EV e julgar a decisão do
+// usuário. Ver selectSessionVariation (cfg.forcedEntry) — o ponto exato onde isso se conecta.
+// Em caso de qualquer falha (rede, JSON inválido, valor fora da enumeração, timeout), o app cai
+// de volta pro gerador local em silêncio — a sessão nunca trava esperando a IA.
+function computeAiSelectionDomain(cfg, faseKey, streetKey) {
+  if (streetKey === "PRE-FLOP") {
+    let bank = filterPreflopBankByPreset(selectGeneralSpots(faseKey, "PRE-FLOP"), cfg.preset);
+    if (!cfg.preset) bank = filterBankByHeroPosition(bank, cfg.heroPositionFilter);
+    bank = filterBankByTableSize(bank, cfg.tableSize);
+    if (!bank.length) return null;
+    return {
+      street: "PRE-FLOP",
+      positions: [...new Set(bank.map((e) => e.position))],
+      scenarios: [...new Set(bank.map((e) => e.scenario))],
+      handTypes: HAND_TYPES.map((h) => h.type),
+    };
+  }
+  let bank = filterPostflopBankByPreset(selectGeneralSpots(faseKey, streetKey), cfg.preset);
+  if (!cfg.preset) bank = filterBankByHeroPosition(bank, cfg.heroPositionFilter);
+  bank = filterBankByTableSize(bank, cfg.tableSize);
+  if (!bank.length) return null;
+  const buckets = streetKey === "RIVER" ? RIVER_BUCKETS : streetKey === "TURN" ? TURN_BUCKETS : FLOP_BUCKETS;
+  return {
+    street: streetKey,
+    positions: [...new Set(bank.map((e) => e.position))],
+    scenarios: [...new Set(bank.map((e) => e.scenario))],
+    buckets,
+    sprLevels: POSTFLOP_SPR,
+  };
+}
+function buildAiSpotPrompt(domain, faseKey, recentSummary) {
+  const base = `Você está escolhendo o PRÓXIMO cenário de treino de poker (torneio No-Limit Hold'em) para um app de treino, fase de torneio "${faseKey}". Sua ÚNICA tarefa é ESCOLHER valores dentro das listas abaixo, priorizando variedade real (evite repetir o que já apareceu recentemente) — nunca escreva um valor fora das listas, e nunca calcule a ação correta (isso é feito por outro motor determinístico do app, você não participa disso).`;
+  const fields = domain.street === "PRE-FLOP"
+    ? `Responda SOMENTE em JSON estrito, sem texto fora do JSON: {"position": <uma destas: ${domain.positions.join(", ")}>, "scenario": <uma destas: ${domain.scenarios.join(", ")}>, "handType": <um destes tipos de mão pré-flop: ${domain.handTypes.join(",")}>, "stackBB": <número entre 8 e 200>}`
+    : `Responda SOMENTE em JSON estrito, sem texto fora do JSON: {"position": <uma destas: ${domain.positions.join(", ")}>, "scenario": <uma destas: ${domain.scenarios.join(", ")}>, "bucket": <um destes: ${domain.buckets.join(", ")}>, "spr": <um destes: ${domain.sprLevels.join(", ")}>, "participantCount": <2, 3 ou 4>, "stackBB": <número entre 8 e 200>}`;
+  const recent = recentSummary ? `\nEvite repetir os cenários mais recentes desta sessão: ${recentSummary}.` : "";
+  return `${base}${recent}\n${fields}`;
+}
+function validateAiSpotParams(raw, domain) {
+  if (!raw || typeof raw !== "object" || raw.__parseError) return null;
+  if (!domain.positions.includes(raw.position)) return null;
+  if (!domain.scenarios.includes(raw.scenario)) return null;
+  const stackNum = Number(raw.stackBB);
+  const stackBB = Number.isFinite(stackNum) ? Math.min(200, Math.max(8, Math.round(stackNum))) : null;
+  if (domain.street === "PRE-FLOP") {
+    if (!domain.handTypes.includes(raw.handType)) return null;
+    return { position: raw.position, scenario: raw.scenario, handType: raw.handType, stackBB };
+  }
+  if (!domain.buckets.includes(raw.bucket)) return null;
+  if (!domain.sprLevels.includes(raw.spr)) return null;
+  const participantCount = [2, 3, 4].includes(Number(raw.participantCount)) ? Number(raw.participantCount) : 2;
+  return { position: raw.position, scenario: raw.scenario, bucket: raw.bucket, spr: raw.spr, participantCount, stackBB };
+}
+function buildAiForcedEntry(params, faseKey, streetKey) {
+  const id = `AI|${faseKey}|${streetKey}|${hashStr(JSON.stringify(params))}|${Date.now()}`;
+  const stackRange = params.stackBB != null ? [Math.max(2, params.stackBB - 2), params.stackBB + 2] : undefined;
+  if (streetKey === "PRE-FLOP") {
+    return { id, position: params.position, scenario: params.scenario, handType: params.handType, variant: "AI", stackRange };
+  }
+  return {
+    id, position: params.position, scenario: params.scenario, bucket: params.bucket, spr: params.spr,
+    variant: "AI", participantCount: params.participantCount || 2, preflopLevel: 2, stackRange,
+  };
+}
+// Ponto único de entrada usado pelo componente (ver useEffect de pré-busca): tenta gerar+validar
+// uma entrada forçada; qualquer problema (rede, parsing, valor fora da enumeração) devolve null
+// em vez de lançar exceção — o chamador cai pro gerador local automaticamente.
+async function fetchAiForcedEntry({ provider, apiKey, cfg, faseKey, streetKey, recentSummary }) {
+  const domain = computeAiSelectionDomain(cfg, faseKey, streetKey);
+  if (!domain) return null;
+  const caller = AI_CALLERS[provider];
+  if (!caller || !apiKey) return null;
+  const prompt = buildAiSpotPrompt(domain, faseKey, recentSummary);
+  const raw = await caller(apiKey, prompt, null, "json");
+  const params = validateAiSpotParams(raw, domain);
+  if (!params) return null;
+  return buildAiForcedEntry(params, faseKey, streetKey);
+}
+
 const TRAINING_BUTTON_NAMES = TRAINING_PRESETS.map((p) => `"${p.label}" (grupo ${p.group})`).join(", ");
 const REPORT_PROMPT_PREFIX = `Você é um "leak seeker" — um caça-vazamentos de poker — analisando o histórico de treino de um jogador recreativo de torneios dentro do app STACKUP HOLD'EM PRO. A seguir está um resumo com o total de spots treinados, taxa de acerto, EV médio das decisões, e as últimas decisões (fase do torneio, street, posição, tipo de mão, ação escolhida, ação correta, se acertou ou errou, EV da linha correta).
 
@@ -3119,6 +3259,16 @@ export default function App() {
   const [aiReportLoading, setAiReportLoading] = useState(false);
   const [aiReportError, setAiReportError] = useState(null);
   const [aiReport, setAiReport] = useState(null);
+  // GERAÇÃO DE SPOTS POR IA (BETA): desligada por padrão, exige provedor+chave já configurados
+  // acima. aiSpotCache guarda entradas já buscadas por chave de spot (ver aiSpotCacheKey), pra
+  // nunca refazer a chamada de rede pro mesmo spot (inclusive ao navegar ANTERIOR/PRÓXIMO de
+  // volta pra ele). Só ativa quando FASE e STREET são escolhas explícitas (não ALEATÓRIO/MIXED)
+  // — sem isso o app não saberia de antemão qual fase/street pedir pra IA, já que MIXED/ALEATÓRIO
+  // só resolvem isso sorteando por dentro da própria geração do spot.
+  const [aiSpotGenerationEnabled, setAiSpotGenerationEnabled] = useState(false);
+  const [aiSpotCache, setAiSpotCache] = useState({});
+  const [aiSpotFetching, setAiSpotFetching] = useState(false);
+  const aiSpotFetchKeyRef = useRef(null);
 
   const [activePresetKey, setActivePresetKey] = useState(null);
   const [presetProgress, setPresetProgress] = useState({});
@@ -3357,12 +3507,41 @@ export default function App() {
     // `dueReview` é intencionalmente excluída: ela pode mudar ao salvar a resposta da mão atual.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [modalidade, field, mix, tableSize, fase, street, heroPositionFilter, stackFilter, spotIndex, sessionStart, sessionStepRaw, sessionSeed, spotsPerFase, activePreset]);
-  const spot = useMemo(() => generateSpot(cfg), [cfg]);
+  // GERAÇÃO DE SPOTS POR IA (BETA) — só elegível com FASE e STREET explícitos (não
+  // ALEATÓRIO/MIXED, ver comentário do state acima) e fora de revisão (dueReview tem seu próprio
+  // spot fixo, não faz sentido a IA escolher outro). aiSpotCacheKey não usa spot.street (ainda não
+  // existe nesse ponto) — usa cfg.street diretamente, que já é a mesma coisa quando elegível.
+  const aiSpotEligible = aiSpotGenerationEnabled && !!aiProvider && !!aiKeys[aiProvider] && !cfg.reviewId
+    && cfg.fase && cfg.fase !== "ALEATORIO" && cfg.street && cfg.street !== "MIXED";
+  const aiSpotCacheKey = aiSpotEligible
+    ? `${sessionSeed}|${cfg.fase}|${cfg.street}|${cfg.spotIndex}|${cfg.preset?.key || "GERAL"}`
+    : null;
+  const aiForcedEntry = aiSpotCacheKey ? aiSpotCache[aiSpotCacheKey] || null : null;
+  const spot = useMemo(() => generateSpot(aiForcedEntry ? { ...cfg, forcedEntry: aiForcedEntry } : cfg), [cfg, aiForcedEntry]);
   const analysis = useMemo(() => computeAnalysis(spot, cfg), [spot, cfg]);
   const activeDueReview = cfg.reviewId ? reviewQueue.find((review) => review.id === cfg.reviewId) || null : null;
   const currentSpotKey = `${sessionSeed}|${cfg.fase}|${spot.street}|${cfg.spotIndex}|${cfg.preset?.key || "GERAL"}|${cfg.reviewId || "NOVO"}`;
   const currentSpotWasAnswered = history.some((entry) => entry.spotKey === currentSpotKey);
   const currentSpotIsLocked = !!decision || (currentSpotWasAnswered && reviewUnlockedSpotKey !== currentSpotKey);
+  // Pré-busca da GERAÇÃO DE SPOTS POR IA — nunca bloqueia a mesa: enquanto a IA não responde (ou
+  // se falhar/der timeout), `spot` acima já está usando o gerador local normalmente (aiForcedEntry
+  // só existe depois que o cache é preenchido aqui). `history`/`cfg` entram nas deps só pra manter
+  // o resumo/parâmetros atualizados — diferente do bug corrigido no efeito de replay de ações
+  // (ver useEffect de actionStep mais abaixo), aqui cada re-execução é barata e idempotente: as
+  // duas guardas (cache já preenchido / já buscando esta mesma chave) impedem qualquer chamada de
+  // rede duplicada, então incluir esses deps não recria o problema de antes.
+  useEffect(() => {
+    if (!aiSpotCacheKey || aiSpotCache[aiSpotCacheKey] || aiSpotFetchKeyRef.current === aiSpotCacheKey) return;
+    aiSpotFetchKeyRef.current = aiSpotCacheKey;
+    setAiSpotFetching(true);
+    let cancelled = false;
+    const recentSummary = history.slice(-5).map((entry) => `${entry.position || "?"}/${entry.scenario || entry.street || "?"}`).join(", ");
+    fetchAiForcedEntry({ provider: aiProvider, apiKey: aiKeys[aiProvider], cfg, faseKey: cfg.fase, streetKey: cfg.street, recentSummary })
+      .then((entry) => { if (!cancelled && entry) setAiSpotCache((prev) => ({ ...prev, [aiSpotCacheKey]: entry })); })
+      .catch(() => {})
+      .finally(() => { if (!cancelled) setAiSpotFetching(false); aiSpotFetchKeyRef.current = null; });
+    return () => { cancelled = true; };
+  }, [aiSpotCacheKey, aiSpotCache, aiProvider, aiKeys, cfg, history]);
   const examProgress = Math.min(examLength, Math.max(0, history.length - examStartIndex));
 
   const startExam = () => {
@@ -4439,6 +4618,18 @@ export default function App() {
               </button>
             </div>
             {aiKeys[aiProvider] && <div style={{ fontSize: 11, color: "#86EFAC" }}>CHAVE SALVA PARA {aiProvider.toUpperCase()} ✓</div>}
+
+            {aiKeys[aiProvider] && (
+              <div className="rounded-md" style={{ border: "1px solid #A855F7", padding: 10, display: "flex", flexDirection: "column", gap: 6 }}>
+                <SelCard active={aiSpotGenerationEnabled} style={{ height: 32, width: "100%" }} onClick={() => setAiSpotGenerationEnabled((v) => !v)}>
+                  GERAÇÃO DE SPOTS POR IA (BETA) {aiSpotGenerationEnabled ? "— ATIVA" : ""}
+                </SelCard>
+                <div style={{ fontSize: 10, color: "#9CA3AF", lineHeight: 1.4 }}>
+                  A IA só escolhe posição/cenário/mão/profundidade dentro do que o app já suporta — a ação correta continua sempre calculada pelo motor do app, nunca pela IA. Só funciona com FASE e STREET escolhidas (não ALEATÓRIO/MIXED). Se a IA falhar ou demorar, o spot local aparece normalmente.
+                  {aiSpotFetching && <span style={{ color: "#D8B4FE" }}> Buscando próximo spot com IA...</span>}
+                </div>
+              </div>
+            )}
 
             <label className="rounded-md flex items-center justify-center cursor-pointer" style={{ height: 44, border: "1px dashed #A855F7", color: "#D8B4FE", fontSize: 11, fontWeight: 800 }}>
               {aiPhoto ? "FOTO CARREGADA ✓ — TROCAR" : "SELECIONAR FOTO DA ESTRUTURA"}
