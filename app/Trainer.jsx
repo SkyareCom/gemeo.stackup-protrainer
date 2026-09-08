@@ -1301,12 +1301,27 @@ function postflopVillainRangeWidth(entry, spot, softFactor) {
   return Math.min(88, Math.max(5, scenarioWidth * positionFactor * preflopFactor * multiwayFactor * headsUpFactor * softFactor));
 }
 
-function simulatePostflopEquityMonteCarlo(heroCards, board, entry, spot, seed, softFactor = 1.0, iterations = MC_ITERATIONS) {
+// Borda do range SUAVE em vez de corte rígido — GRAU 1 (aproximação de solver): a versão
+// anterior aceitava uma mão do vilão só se chenScore >= limiar (tudo acima entra com peso igual,
+// tudo abaixo é impossível), o que produz uma borda de range fisicamente irreal — ranges
+// resolvidos de verdade têm bordas MISTAS (mãos perto do limiar entram só uma fração das vezes).
+// Uma logística centrada no limiar aproxima esse comportamento sem precisar resolver o jogo:
+// ~3-4 pontos de Chen Score acima/abaixo do limiar já cobre a faixa de transição de ~10% a ~90%
+// de inclusão (softness=1.6 escolhido pra isso, calibrado à escala típica do Chen Score 0-20).
+const RANGE_EDGE_SOFTNESS = 1.6;
+function rangeInclusionProbability(score, threshold) {
+  return 1 / (1 + Math.exp(-(score - threshold) / RANGE_EDGE_SOFTNESS));
+}
+// widthOverridePct: usado pelo cálculo de fold equity (buildPolicyActionEVs) pra simular a
+// equidade do herói contra o CONTINUING RANGE do vilão (a fatia mais forte do range original que
+// sobra depois que a parte mais fraca desiste de um raise/aposta) — sem isso, teria que duplicar
+// toda a lógica de amostragem só pra rodar contra um range mais estreito.
+function simulatePostflopEquityMonteCarlo(heroCards, board, entry, spot, seed, softFactor = 1.0, iterations = MC_ITERATIONS, widthOverridePct = null) {
   const rng = mulberry32(hashStr(seed));
   const usedKeys = new Set([...heroCards, ...board].map((c) => c.v + c.s));
   const remainingDeck = buildDeck().filter((c) => !usedKeys.has(c.v + c.s));
   const cardsToComplete = 5 - board.length;
-  const widthPct = postflopVillainRangeWidth(entry, spot, softFactor);
+  const widthPct = widthOverridePct != null ? widthOverridePct : postflopVillainRangeWidth(entry, spot, softFactor);
   const scoreThreshold = chenScoreAtPercentile(widthPct);
   const opponentCount = Math.max(1, (entry && entry.participantCount ? entry.participantCount : 2) - 1);
 
@@ -1320,7 +1335,7 @@ function simulatePostflopEquityMonteCarlo(heroCards, board, entry, spot, seed, s
       const available = remainingDeck.filter((c) => !iterationBlocked.has(c.v + c.s));
       let villainHole = drawTwoDistinct(available, rng);
       for (let attempt = 0; attempt < MC_RANGE_RETRY_LIMIT; attempt++) {
-        if (chenScore(villainHole[0], villainHole[1]) >= scoreThreshold) break;
+        if (rng() < rangeInclusionProbability(chenScore(villainHole[0], villainHole[1]), scoreThreshold)) break;
         villainHole = drawTwoDistinct(available, rng);
       }
       villainHoles.push(villainHole);
@@ -2049,31 +2064,45 @@ function mixFrequencies(action, confidence, callLegal = true) {
   return { raiseFreq: 0, callFreq: rest, foldFreq: dom, checkFreq: 0 };
 }
 
-function buildPolicyActionEVs(spot, exploitAction, frequencies, bestEvBB) {
+// GRAU 1 (aproximação de solver): EV real calculado por ação, não mais uma penalidade heurística
+// por "distância de frequência/agressividade" (o jeito antigo, que não tinha nenhuma relação com
+// o tamanho da aposta real do spot). FOLD/CHECK/CALL usam o mesmo formato de EV líquido já usado
+// no resto do arquivo: equity * pote - (1-equity) * risco. RAISE/ALL IN agora modelam FOLD EQUITY
+// de verdade via MDF (minimum defense frequency = pote/(pote+aposta) — o piso clássico de quanto
+// o vilão PRECISA continuar pra não virar alvo de blefe puro e sempre-lucrativo): quanto maior a
+// aposta do herói em relação ao pote, menor a fração do range do vilão que sobra pra continuar, e
+// a equidade contra essa fatia que sobra (sempre mais forte que o range inteiro) é recalculada
+// via `computeContinueEquity` — pós-flop, isso roda uma segunda passada do próprio motor de Monte
+// Carlo contra um range mais estreito (ver computeAnalysis); pré-flop, como não existe simulação
+// de equidade real, usa uma leitura mais pessimista do percentil implícito (aproximação, não
+// solver — ver comentário em computeAnalysis sobre isso).
+function buildPolicyActionEVs({ spot, finalEquity, potBeforeBB, callChipsBB, raiseSizingBB, computeContinueEquity }) {
   const isPreflop = spot.street === "PRE-FLOP";
   const freeCheckPreflop = isPreflop && ["BB_VS_LIMPERS","HU_BB_VS_LIMP"].includes(spot.bankEntry?.strategicNode);
   const legal = spot.facingBet
     ? ["FOLD", "CALL", "RAISE", "ALL IN"]
     : freeCheckPreflop ? ["CHECK", "RAISE", "ALL IN"] : isPreflop ? ["FOLD", "RAISE", "ALL IN"] : ["CHECK", "RAISE", "ALL IN"];
-  const frequency = {
-    FOLD: Number(frequencies.foldFreq || 0),
-    CHECK: Number(frequencies.checkFreq || 0) || Math.max(0, 100 - Number(frequencies.raiseFreq || 0)),
-    CALL: Number(frequencies.callFreq || 0),
-    RAISE: Number(frequencies.raiseFreq || 0),
-    "ALL IN": exploitAction === "ALL IN" ? Number(frequencies.raiseFreq || 70) : Number(frequencies.raiseFreq || 0) * 0.25,
-  };
-  const best = exploitAction === "FOLD" || exploitAction === "CHECK" ? Math.max(0, Number(bestEvBB || 0)) : Math.max(0.05, Number(bestEvBB || 0));
-  const bestFrequency = Math.max(1, frequency[exploitAction] || 70);
-  const riskScale = Math.max(0.8, Math.min(8, (spot.pot / spot.bb) * 0.22 + spot.callChips / spot.bb * 0.18));
+  const equity = Math.max(1, Math.min(99, Number(finalEquity) || 50));
+  const pot = Math.max(0.1, Number(potBeforeBB) || 0.1);
+  const callBB = Math.max(0, Number(callChipsBB) || 0);
   const values = {};
-  legal.forEach((action) => {
-    if (action === exploitAction) values[action] = best;
-    else {
-      const frequencyGap = Math.max(0.08, (bestFrequency - (frequency[action] || 0)) / 100);
-      const aggressionGap = Math.abs((ACTION_AGGRESSIVENESS[action] ?? (action === "ALL IN" ? 3 : 0)) - (ACTION_AGGRESSIVENESS[exploitAction] ?? 0));
-      values[action] = best - riskScale * (frequencyGap + aggressionGap * 0.16);
-    }
-  });
+  if (legal.includes("FOLD")) values.FOLD = 0;
+  if (legal.includes("CHECK")) values.CHECK = (equity / 100) * pot;
+  if (legal.includes("CALL")) values.CALL = (equity / 100) * pot - (1 - equity / 100) * callBB;
+
+  const raiseIncrement = {
+    RAISE: Math.max(0.5, Number(raiseSizingBB) || pot * 0.66),
+    "ALL IN": Math.max(0.5, Number(spot.heroStackBB) || pot * 2),
+  };
+  for (const action of ["RAISE", "ALL IN"]) {
+    if (!legal.includes(action)) continue;
+    const inc = raiseIncrement[action];
+    const mdf = pot / (pot + inc); // fração mínima que o vilão precisa continuar (senão vira alvo de blefe puro)
+    const foldFrequency = Math.max(0.05, Math.min(0.95, 1 - mdf)); // clamps: range real nunca desiste/continua 100%
+    const continueEquity = computeContinueEquity ? computeContinueEquity(mdf, action) : Math.max(3, equity - (1 - mdf) * 30);
+    const continueBranch = (continueEquity / 100) * (pot + inc) - (1 - continueEquity / 100) * inc;
+    values[action] = foldFrequency * pot + (1 - foldFrequency) * continueBranch;
+  }
   return values;
 }
 
@@ -2169,7 +2198,17 @@ function computeAnalysis(spot, cfg) {
     // partir do percentil como referência pra estimar o EV em BB da linha escolhida.
     const impliedEquity = Math.max(3, Math.min(97, 100 - percentile));
     const evBB = dominant.action === "FOLD" ? 0 : ((impliedEquity / 100) * spot.pot - (1 - impliedEquity / 100) * spot.callChips) / spot.bb;
-    const actionEVs = buildPolicyActionEVs(spot, dominant.action, { raiseFreq, callFreq, foldFreq, checkFreq }, evBB);
+    const potBeforeBB = spot.pot / spot.bb;
+    const callChipsBB = spot.callChips / spot.bb;
+    // Sem sizing explícito de raise no motor de pré-flop (que trabalha por percentil de força, não
+    // por tiers de aposta pós-flop) — deixa buildPolicyActionEVs usar o proxy padrão (66% do pote)
+    // pra estimar o tamanho do raise/all in. computeContinueEquity aqui é uma aproximação (não
+    // simulação real): sem equity de Monte Carlo no pré-flop, usa a mesma leitura pessimista do
+    // percentil implícito já usada no cálculo de evBB acima.
+    const actionEVs = buildPolicyActionEVs({
+      spot, finalEquity: impliedEquity, potBeforeBB, callChipsBB,
+      computeContinueEquity: (mdf) => Math.max(3, Math.min(97, impliedEquity - (1 - mdf) * 30)),
+    });
     return {
       isBank: true, entry, percentile: rawPercentile.toFixed(1), rangePercentile: percentile.toFixed(1), dominantLabel,
       solutionKey: `${state.scenario}|${state.position}|${state.openerPos || "-"}|${state.threebettorPos || "-"}|${Math.round(state.effectiveStackBB)}BB|${state.participantCount}P`,
@@ -2249,16 +2288,35 @@ function computeAnalysis(spot, cfg) {
   const { raiseFreq, callFreq, foldFreq, checkFreq } = mixFrequencies(exploitAction, legConfidence, !!spot.facingBet);
   const evBB = ((finalEquity / 100) * pot - (1 - finalEquity / 100) * callChips) / spot.bb;
 
-  // Multi-sizing: só faz sentido sugerir um tamanho de aposta quando a decisão é apostar/aumentar.
-  // ALL IN já é um tamanho definido (o stack inteiro), então fica fora da sugestão de tiers.
+  // Multi-sizing: a exibição (`sizing`) só faz sentido quando a decisão é apostar/aumentar — ALL IN
+  // já é um tamanho definido (o stack inteiro), então fica fora da sugestão de tiers. Mas o EV real
+  // de RAISE/ALL IN (buildPolicyActionEVs, abaixo) precisa de um tamanho em BB pra QUALQUER spot,
+  // não só quando RAISE é a ação recomendada — por isso `chosenSizing`/`raiseSizingBB` são
+  // calculados sempre, e só o objeto de exibição `sizing` continua condicional.
+  const chosenSizing = suggestBetSizing(boardTexture, finalEquity);
+  const raiseSizingBB = (chosenSizing.fraction * pot) / spot.bb;
   let sizing = null;
   if (exploitAction === "RAISE") {
-    const chosen = suggestBetSizing(boardTexture, finalEquity);
-    const sizingBB = (chosen.fraction * pot) / spot.bb;
-    sizing = { tier: chosen.tier, label: SIZING_LABEL_PT[chosen.tier], fraction: chosen.fraction, bb: sizingBB.toFixed(1), reason: chosen.reason };
+    sizing = { tier: chosenSizing.tier, label: SIZING_LABEL_PT[chosenSizing.tier], fraction: chosenSizing.fraction, bb: raiseSizingBB.toFixed(1), reason: chosenSizing.reason };
   }
 
-  const actionEVs = buildPolicyActionEVs(spot, exploitAction, { raiseFreq, callFreq, foldFreq, checkFreq }, evBB);
+  const potBeforeBB = pot / spot.bb;
+  const callChipsBB = callChips / spot.bb;
+  // computeContinueEquity: quando há board real (pós-flop), roda uma segunda passada do próprio
+  // motor de Monte Carlo contra um range mais ESTREITO (a fatia que sobra depois que `1-mdf` do
+  // range do vilão desiste do raise/aposta do herói — ver comentário de buildPolicyActionEVs).
+  // Sem board (pré-flop, quando esse ramo é alcançado — bank já retornou antes), cai na mesma
+  // aproximação por percentil usada no ramo de banco acima, já que não há equity simulada aqui.
+  const actionEVs = buildPolicyActionEVs({
+    spot, finalEquity, potBeforeBB, callChipsBB, raiseSizingBB,
+    computeContinueEquity: (mdf) => {
+      if (board.length === 0) return Math.max(3, Math.min(97, finalEquity - (1 - mdf) * 30));
+      const seed = `MC-CONTINUE|${spot.street}|${spot.heroPosition}|${spot.postflopEntry?.villainPos || "-"}|` +
+        `${heroCards.map((c) => c.v + c.s).join(",")}|${board.map((c) => c.v + c.s).join(",")}|${mdf.toFixed(3)}`;
+      const narrowedWidthPct = postflopVillainRangeWidth(spot.postflopEntry, spot, softFactor) * mdf;
+      return simulatePostflopEquityMonteCarlo(heroCards, board, spot.postflopEntry, spot, seed, softFactor, 600, narrowedWidthPct);
+    },
+  });
   return {
     isBank: false, dominantLabel, usedMargin,
     rangeEngine: "STATE_MONTE_CARLO_V1", sampleIndependent: true,
@@ -2362,10 +2420,6 @@ function mdfQuickExplanation(value, facingBet, suggestedAction) {
   return `MDF é do range, não desta mão: continuar cerca de ${mdf.toFixed(0)}%; ${rangeAdvice}; nesta mão: ${quickActionLabel(suggestedAction)}`;
 }
 const ACTION_VERDICT_PT = { FOLD: "FOLDAR", CALL: "PAGAR", RAISE: "AUMENTAR", CHECK: "DAR CHECK", "ALL IN": "IR ALL-IN" };
-// Ordem de agressividade das ações — usada pra saber se um ajuste (field/mix ou ICM) tornou a
-// decisão mais SOLTA ou mais APERTADA, em vez de sempre falar "pede mais cuidado" mesmo quando
-// o ajuste na real afrouxou a exigência (bug encontrado: texto e veredito se contradiziam).
-const ACTION_AGGRESSIVENESS = { FOLD: 0, CHECK: 0, CALL: 1, RAISE: 2, "ALL IN": 3 };
 
 const STREET_LABEL_PT = { "PRE-FLOP": "PRÉ-FLOP", FLOP: "FLOP", TURN: "TURN", RIVER: "RIVER" };
 // Cor do badge de street no card JOGADORES COM AÇÃO — pré-flop verde, flop azul, turn rosa,
