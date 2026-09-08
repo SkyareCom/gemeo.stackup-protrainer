@@ -4004,11 +4004,19 @@ export default function App() {
       window.clearTimeout(resetTimer);
       window.clearTimeout(focusTimer);
     };
-    // `decision` fica de fora do array de deps de propósito: é lido só como trava pontual (não
-    // reagir a cada resposta), pra não reprocessar esse efeito inteiro a cada handleAction —
-    // quem já cobre a mudança real (trocar de spot) é spotIndex/fase/street/activePresetKey.
+    // Deps propositalmente restritas à mudança REAL de spot (navegação/filtro) — nunca a
+    // `history`/`decision`/`currentSpotWasAnswered`/`currentSpotKey`/`reviewUnlockedSpotKey`/
+    // `analysis`/`actionSequence`. BUG CORRIGIDO: essas variáveis chegaram a entrar aqui pra
+    // alimentar o ramo "congelar spot já respondido" acima, mas como `history` muda a CADA
+    // handleAction (mesmo sem trocar de spot), esse efeito inteiro — inclusive o resetTimer/
+    // focusTimer que reanimam a sequência de ações do zero — reexecutava logo após o herói
+    // decidir, ainda na mesma mão, antes de qualquer clique em PRÓXIMO. Na prática a mesa
+    // parecia "regerar"/repetir o spot sozinha. As variáveis extras continuam lidas aqui dentro
+    // (closure), só não disparam mais o efeito sozinhas — no momento em que spotIndex/fase/
+    // street/activePresetKey realmente mudam (navegação de verdade), elas já estão atualizadas
+    // pro spot novo, então o ramo "congelar" acima continua funcionando normalmente.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [spotIndex, fase, street, activePresetKey, actionFlowEnabled, currentSpotWasAnswered, currentSpotKey, reviewUnlockedSpotKey, history, analysis, actionSequence]);
+  }, [spotIndex, fase, street, activePresetKey, actionFlowEnabled]);
 
   useEffect(() => {
     if (actionStep < 0) return;
