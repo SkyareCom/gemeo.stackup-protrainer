@@ -1,0 +1,722 @@
+[
+  {
+    "key": "dry_deep",
+    "pot_type": "srp",
+    "texture": "dry",
+    "spr": "deep",
+    "root_action_freqs": {
+      "CHECK": 0.9958698334505401,
+      "BET 50.000000": 0.004123517681830099,
+      "BET 500.000000": 6.650332058597179e-06
+    },
+    "root_missing_combos": 0,
+    "bet_size_response": {
+      "50.0": {
+        "solver_fold": 0.23863925154506496,
+        "solver_call": 0.5804991249191066,
+        "solver_raise": 0.18086162653613228,
+        "mdf_predicted_fold": 0.33333333333333337,
+        "missing_combos": 0,
+        "num_combos": 225
+      },
+      "500.0": {
+        "solver_fold": 0.6292091903794809,
+        "solver_call": 0.37079080750030896,
+        "solver_raise": 0,
+        "mdf_predicted_fold": 0.8333333333333334,
+        "missing_combos": 0,
+        "num_combos": 225
+      }
+    }
+  },
+  {
+    "key": "dry_shallow",
+    "pot_type": "srp",
+    "texture": "dry",
+    "spr": "shallow",
+    "root_action_freqs": {
+      "CHECK": 0.8898722700781364,
+      "BET 50.000000": 0.10804286095534844,
+      "BET 150.000000": 0.002084865291221762
+    },
+    "root_missing_combos": 0,
+    "bet_size_response": {
+      "150.0": {
+        "solver_fold": 0.4482953020630156,
+        "solver_call": 0.5517046967997359,
+        "solver_raise": 0,
+        "mdf_predicted_fold": 0.6,
+        "missing_combos": 0,
+        "num_combos": 225
+      },
+      "50.0": {
+        "solver_fold": 0.3495391313401599,
+        "solver_call": 0.3063461664641857,
+        "solver_raise": 0.34411469944438317,
+        "mdf_predicted_fold": 0.33333333333333337,
+        "missing_combos": 0,
+        "num_combos": 225
+      }
+    }
+  },
+  {
+    "key": "paired_deep",
+    "pot_type": "srp",
+    "texture": "paired",
+    "spr": "deep",
+    "root_action_freqs": {
+      "CHECK": 0.9998143730691937,
+      "BET 50.000000": 0.0001849794755735641,
+      "BET 500.000000": 6.487878221182055e-07
+    },
+    "root_missing_combos": 0,
+    "bet_size_response": {
+      "50.0": {
+        "solver_fold": 0.23055433369311257,
+        "solver_call": 0.4408055708959564,
+        "solver_raise": 0.32864009552825185,
+        "mdf_predicted_fold": 0.33333333333333337,
+        "missing_combos": 0,
+        "num_combos": 220
+      },
+      "500.0": {
+        "solver_fold": 0.5634950451933375,
+        "solver_call": 0.4365049509538189,
+        "solver_raise": 0,
+        "mdf_predicted_fold": 0.8333333333333334,
+        "missing_combos": 0,
+        "num_combos": 220
+      }
+    }
+  },
+  {
+    "key": "paired_shallow",
+    "pot_type": "srp",
+    "texture": "paired",
+    "spr": "shallow",
+    "root_action_freqs": {
+      "CHECK": 0.974619508990438,
+      "BET 50.000000": 0.018615805369935824,
+      "BET 150.000000": 0.006764689979041951
+    },
+    "root_missing_combos": 0,
+    "bet_size_response": {
+      "150.0": {
+        "solver_fold": 0.42085382338426086,
+        "solver_call": 0.5791461752346257,
+        "solver_raise": 0,
+        "mdf_predicted_fold": 0.6,
+        "missing_combos": 0,
+        "num_combos": 220
+      },
+      "50.0": {
+        "solver_fold": 0.34070658197584663,
+        "solver_call": 0.19262783086169308,
+        "solver_raise": 0.466665592129554,
+        "mdf_predicted_fold": 0.33333333333333337,
+        "missing_combos": 0,
+        "num_combos": 220
+      }
+    }
+  },
+  {
+    "key": "srp_dry_medium",
+    "pot_type": "srp",
+    "texture": "dry",
+    "spr": "medium",
+    "root_action_freqs": {
+      "CHECK": 0.8583889424479554,
+      "BET 50.000000": 0.14141701326762207,
+      "BET 300.000000": 0.00019404633982663338
+    },
+    "root_missing_combos": 0,
+    "bet_size_response": {
+      "300.0": {
+        "solver_fold": 0.5522918424313031,
+        "solver_call": 0.44770815610786413,
+        "solver_raise": 0,
+        "mdf_predicted_fold": 0.75,
+        "missing_combos": 0,
+        "num_combos": 225
+      },
+      "50.0": {
+        "solver_fold": 0.20293906986288437,
+        "solver_call": 0.7901433620667774,
+        "solver_raise": 0.006917568233548315,
+        "mdf_predicted_fold": 0.33333333333333337,
+        "missing_combos": 0,
+        "num_combos": 225
+      }
+    }
+  },
+  {
+    "key": "srp_mono_deep",
+    "pot_type": "srp",
+    "texture": "mono",
+    "spr": "deep",
+    "root_action_freqs": {
+      "CHECK": 0.8324257884276762,
+      "BET 50.000000": 0.16738797147010975,
+      "BET 500.000000": 0.0001862429748429621
+    },
+    "root_missing_combos": 0,
+    "bet_size_response": {
+      "50.0": {
+        "solver_fold": 0.1934104286192964,
+        "solver_call": 0.6325411312690541,
+        "solver_raise": 0.1740484467060905,
+        "mdf_predicted_fold": 0.33333333333333337,
+        "missing_combos": 0,
+        "num_combos": 227
+      },
+      "500.0": {
+        "solver_fold": 0.5631958781156706,
+        "solver_call": 0.43680412351558834,
+        "solver_raise": 0,
+        "mdf_predicted_fold": 0.8333333333333334,
+        "missing_combos": 0,
+        "num_combos": 227
+      }
+    }
+  },
+  {
+    "key": "srp_mono_medium",
+    "pot_type": "srp",
+    "texture": "mono",
+    "spr": "medium",
+    "root_action_freqs": {
+      "CHECK": 0.9457298627645849,
+      "BET 50.000000": 0.053166862669255195,
+      "BET 300.000000": 0.001103275865016454
+    },
+    "root_missing_combos": 0,
+    "bet_size_response": {
+      "300.0": {
+        "solver_fold": 0.5389016240802615,
+        "solver_call": 0.46109837762909106,
+        "solver_raise": 0,
+        "mdf_predicted_fold": 0.75,
+        "missing_combos": 0,
+        "num_combos": 227
+      },
+      "50.0": {
+        "solver_fold": 0.2583367450870449,
+        "solver_call": 0.5122690273961543,
+        "solver_raise": 0.2293942311728184,
+        "mdf_predicted_fold": 0.33333333333333337,
+        "missing_combos": 0,
+        "num_combos": 227
+      }
+    }
+  },
+  {
+    "key": "srp_mono_shallow",
+    "pot_type": "srp",
+    "texture": "mono",
+    "spr": "shallow",
+    "root_action_freqs": {
+      "CHECK": 0.6232261956875002,
+      "BET 50.000000": 0.09672776389807498,
+      "BET 150.000000": 0.2800460367908671
+    },
+    "root_missing_combos": 0,
+    "bet_size_response": {
+      "150.0": {
+        "solver_fold": 0.31233940381128844,
+        "solver_call": 0.6876605964689226,
+        "solver_raise": 0,
+        "mdf_predicted_fold": 0.6,
+        "missing_combos": 0,
+        "num_combos": 227
+      },
+      "50.0": {
+        "solver_fold": 0.26854589413787416,
+        "solver_call": 0.16206084193961418,
+        "solver_raise": 0.5693932625310368,
+        "mdf_predicted_fold": 0.33333333333333337,
+        "missing_combos": 0,
+        "num_combos": 227
+      }
+    }
+  },
+  {
+    "key": "srp_paired_medium",
+    "pot_type": "srp",
+    "texture": "paired",
+    "spr": "medium",
+    "root_action_freqs": {
+      "CHECK": 0.871398946304461,
+      "BET 50.000000": 0.1285748909583126,
+      "BET 300.000000": 2.615743401484563e-05
+    },
+    "root_missing_combos": 0,
+    "bet_size_response": {
+      "300.0": {
+        "solver_fold": 0.47632264836183064,
+        "solver_call": 0.5236773526209499,
+        "solver_raise": 0,
+        "mdf_predicted_fold": 0.75,
+        "missing_combos": 0,
+        "num_combos": 220
+      },
+      "50.0": {
+        "solver_fold": 0.1853909285419072,
+        "solver_call": 0.6961501231128419,
+        "solver_raise": 0.11845894675975442,
+        "mdf_predicted_fold": 0.33333333333333337,
+        "missing_combos": 0,
+        "num_combos": 220
+      }
+    }
+  },
+  {
+    "key": "srp_wet_medium",
+    "pot_type": "srp",
+    "texture": "wet",
+    "spr": "medium",
+    "root_action_freqs": {
+      "CHECK": 0.9806679510437282,
+      "BET 50.000000": 0.01903142419738384,
+      "BET 300.000000": 0.00030062662321529184
+    },
+    "root_missing_combos": 0,
+    "bet_size_response": {
+      "300.0": {
+        "solver_fold": 0.49904271733285216,
+        "solver_call": 0.5009572808880389,
+        "solver_raise": 0,
+        "mdf_predicted_fold": 0.75,
+        "missing_combos": 0,
+        "num_combos": 226
+      },
+      "50.0": {
+        "solver_fold": 0.2833048764715649,
+        "solver_call": 0.4265861165930909,
+        "solver_raise": 0.2901090109015104,
+        "mdf_predicted_fold": 0.33333333333333337,
+        "missing_combos": 0,
+        "num_combos": 226
+      }
+    }
+  },
+  {
+    "key": "threebet_dry_deep",
+    "pot_type": "threebet",
+    "texture": "dry",
+    "spr": "deep",
+    "root_action_freqs": {
+      "CHECK": 0.9970560008232746,
+      "BET 50.000000": 0.0029347157075128904,
+      "BET 500.000000": 9.294528737173979e-06
+    },
+    "root_missing_combos": 0,
+    "bet_size_response": {
+      "50.0": {
+        "solver_fold": 0.2757939841740857,
+        "solver_call": 0.5624615882000285,
+        "solver_raise": 0.16174443648681738,
+        "mdf_predicted_fold": 0.33333333333333337,
+        "missing_combos": 0,
+        "num_combos": 107
+      },
+      "500.0": {
+        "solver_fold": 0.6347301710884456,
+        "solver_call": 0.3652698381422297,
+        "solver_raise": 0,
+        "mdf_predicted_fold": 0.8333333333333334,
+        "missing_combos": 0,
+        "num_combos": 107
+      }
+    }
+  },
+  {
+    "key": "threebet_dry_medium",
+    "pot_type": "threebet",
+    "texture": "dry",
+    "spr": "medium",
+    "root_action_freqs": {
+      "CHECK": 0.6715307855004564,
+      "BET 50.000000": 0.328468957727328,
+      "BET 300.000000": 2.546606548389301e-07
+    },
+    "root_missing_combos": 0,
+    "bet_size_response": {
+      "300.0": {
+        "solver_fold": 0.5627303455251357,
+        "solver_call": 0.437269653027569,
+        "solver_raise": 0,
+        "mdf_predicted_fold": 0.75,
+        "missing_combos": 0,
+        "num_combos": 107
+      },
+      "50.0": {
+        "solver_fold": 0.23828342812642916,
+        "solver_call": 0.7611522589870812,
+        "solver_raise": 0.0005643182133488942,
+        "mdf_predicted_fold": 0.33333333333333337,
+        "missing_combos": 0,
+        "num_combos": 107
+      }
+    }
+  },
+  {
+    "key": "threebet_dry_shallow",
+    "pot_type": "threebet",
+    "texture": "dry",
+    "spr": "shallow",
+    "root_action_freqs": {
+      "CHECK": 0.5681661635022098,
+      "BET 50.000000": 0.4314859183377014,
+      "BET 150.000000": 0.00034790999542974116
+    },
+    "root_missing_combos": 0,
+    "bet_size_response": {
+      "150.0": {
+        "solver_fold": 0.48161524275651596,
+        "solver_call": 0.5183847553074361,
+        "solver_raise": 0,
+        "mdf_predicted_fold": 0.6,
+        "missing_combos": 0,
+        "num_combos": 107
+      },
+      "50.0": {
+        "solver_fold": 0.35466208427517193,
+        "solver_call": 0.44419112584286097,
+        "solver_raise": 0.2011467883653922,
+        "mdf_predicted_fold": 0.33333333333333337,
+        "missing_combos": 0,
+        "num_combos": 107
+      }
+    }
+  },
+  {
+    "key": "threebet_mono_deep",
+    "pot_type": "threebet",
+    "texture": "mono",
+    "spr": "deep",
+    "root_action_freqs": {
+      "CHECK": 0.8266840674219088,
+      "BET 50.000000": 0.17315803656987455,
+      "BET 500.000000": 0.00015789447181152881
+    },
+    "root_missing_combos": 0,
+    "bet_size_response": {
+      "50.0": {
+        "solver_fold": 0.2557799764905267,
+        "solver_call": 0.5589359170310781,
+        "solver_raise": 0.18528411317461058,
+        "mdf_predicted_fold": 0.33333333333333337,
+        "missing_combos": 0,
+        "num_combos": 109
+      },
+      "500.0": {
+        "solver_fold": 0.5837758143572913,
+        "solver_call": 0.4162241842993535,
+        "solver_raise": 0,
+        "mdf_predicted_fold": 0.8333333333333334,
+        "missing_combos": 0,
+        "num_combos": 109
+      }
+    }
+  },
+  {
+    "key": "threebet_mono_medium",
+    "pot_type": "threebet",
+    "texture": "mono",
+    "spr": "medium",
+    "root_action_freqs": {
+      "CHECK": 0.8908790002041812,
+      "BET 50.000000": 0.08703113632795914,
+      "BET 300.000000": 0.022089862490807157
+    },
+    "root_missing_combos": 0,
+    "bet_size_response": {
+      "300.0": {
+        "solver_fold": 0.5152290555521225,
+        "solver_call": 0.48477094634699947,
+        "solver_raise": 0,
+        "mdf_predicted_fold": 0.75,
+        "missing_combos": 0,
+        "num_combos": 109
+      },
+      "50.0": {
+        "solver_fold": 0.3140039889971546,
+        "solver_call": 0.40723450245211523,
+        "solver_raise": 0.27876150981600706,
+        "mdf_predicted_fold": 0.33333333333333337,
+        "missing_combos": 0,
+        "num_combos": 109
+      }
+    }
+  },
+  {
+    "key": "threebet_mono_shallow",
+    "pot_type": "threebet",
+    "texture": "mono",
+    "spr": "shallow",
+    "root_action_freqs": {
+      "CHECK": 0.6701163295066465,
+      "BET 50.000000": 0.08498001201036154,
+      "BET 150.000000": 0.24490365067842454
+    },
+    "root_missing_combos": 0,
+    "bet_size_response": {
+      "150.0": {
+        "solver_fold": 0.3701391753951708,
+        "solver_call": 0.6298608234940718,
+        "solver_raise": 0,
+        "mdf_predicted_fold": 0.6,
+        "missing_combos": 0,
+        "num_combos": 109
+      },
+      "50.0": {
+        "solver_fold": 0.3664558414509132,
+        "solver_call": 0.0789834033336956,
+        "solver_raise": 0.5545607530133178,
+        "mdf_predicted_fold": 0.33333333333333337,
+        "missing_combos": 0,
+        "num_combos": 109
+      }
+    }
+  },
+  {
+    "key": "threebet_paired_deep",
+    "pot_type": "threebet",
+    "texture": "paired",
+    "spr": "deep",
+    "root_action_freqs": {
+      "CHECK": 0.9978303939253841,
+      "BET 50.000000": 0.0021696027282324445,
+      "BET 500.000000": 9.703167100626124e-09
+    },
+    "root_missing_combos": 0,
+    "bet_size_response": {
+      "50.0": {
+        "solver_fold": 0.2643689455070252,
+        "solver_call": 0.5112896669346033,
+        "solver_raise": 0.22434137778628452,
+        "mdf_predicted_fold": 0.33333333333333337,
+        "missing_combos": 0,
+        "num_combos": 102
+      },
+      "500.0": {
+        "solver_fold": 0.6260870193876673,
+        "solver_call": 0.3739129854864343,
+        "solver_raise": 0,
+        "mdf_predicted_fold": 0.8333333333333334,
+        "missing_combos": 0,
+        "num_combos": 102
+      }
+    }
+  },
+  {
+    "key": "threebet_paired_medium",
+    "pot_type": "threebet",
+    "texture": "paired",
+    "spr": "medium",
+    "root_action_freqs": {
+      "CHECK": 0.5395119533916215,
+      "BET 50.000000": 0.4604856037539453,
+      "BET 300.000000": 2.43995608875125e-06
+    },
+    "root_missing_combos": 0,
+    "bet_size_response": {
+      "300.0": {
+        "solver_fold": 0.586348060476646,
+        "solver_call": 0.41365194347949247,
+        "solver_raise": 0,
+        "mdf_predicted_fold": 0.75,
+        "missing_combos": 0,
+        "num_combos": 102
+      },
+      "50.0": {
+        "solver_fold": 0.22913107023059434,
+        "solver_call": 0.6603277350789775,
+        "solver_raise": 0.11054119155881564,
+        "mdf_predicted_fold": 0.33333333333333337,
+        "missing_combos": 0,
+        "num_combos": 102
+      }
+    }
+  },
+  {
+    "key": "threebet_paired_shallow",
+    "pot_type": "threebet",
+    "texture": "paired",
+    "spr": "shallow",
+    "root_action_freqs": {
+      "CHECK": 0.554471483032907,
+      "BET 50.000000": 0.4033356616074622,
+      "BET 150.000000": 0.04219285912323865
+    },
+    "root_missing_combos": 0,
+    "bet_size_response": {
+      "150.0": {
+        "solver_fold": 0.47372500824459485,
+        "solver_call": 0.5262749940739013,
+        "solver_raise": 0,
+        "mdf_predicted_fold": 0.6,
+        "missing_combos": 0,
+        "num_combos": 102
+      },
+      "50.0": {
+        "solver_fold": 0.4000998779897855,
+        "solver_call": 0.1900198751337188,
+        "solver_raise": 0.40988025005764245,
+        "mdf_predicted_fold": 0.33333333333333337,
+        "missing_combos": 0,
+        "num_combos": 102
+      }
+    }
+  },
+  {
+    "key": "threebet_wet_deep",
+    "pot_type": "threebet",
+    "texture": "wet",
+    "spr": "deep",
+    "root_action_freqs": {
+      "CHECK": 0.9996538079742875,
+      "BET 50.000000": 0.00034508009703161847,
+      "BET 500.000000": 1.1096544822056638e-06
+    },
+    "root_missing_combos": 0,
+    "bet_size_response": {
+      "50.0": {
+        "solver_fold": 0.26345380044393696,
+        "solver_call": 0.5337932707816072,
+        "solver_raise": 0.20275293131560163,
+        "mdf_predicted_fold": 0.33333333333333337,
+        "missing_combos": 0,
+        "num_combos": 114
+      },
+      "500.0": {
+        "solver_fold": 0.6310754085354081,
+        "solver_call": 0.36892458696880137,
+        "solver_raise": 0,
+        "mdf_predicted_fold": 0.8333333333333334,
+        "missing_combos": 0,
+        "num_combos": 114
+      }
+    }
+  },
+  {
+    "key": "threebet_wet_medium",
+    "pot_type": "threebet",
+    "texture": "wet",
+    "spr": "medium",
+    "root_action_freqs": {
+      "CHECK": 0.9253506955823728,
+      "BET 50.000000": 0.07460736231790374,
+      "BET 300.000000": 4.193815671474762e-05
+    },
+    "root_missing_combos": 0,
+    "bet_size_response": {
+      "300.0": {
+        "solver_fold": 0.5737078912758088,
+        "solver_call": 0.42629211053857025,
+        "solver_raise": 0,
+        "mdf_predicted_fold": 0.75,
+        "missing_combos": 0,
+        "num_combos": 114
+      },
+      "50.0": {
+        "solver_fold": 0.305735945866489,
+        "solver_call": 0.5169814432950064,
+        "solver_raise": 0.1772826157507435,
+        "mdf_predicted_fold": 0.33333333333333337,
+        "missing_combos": 0,
+        "num_combos": 114
+      }
+    }
+  },
+  {
+    "key": "threebet_wet_shallow",
+    "pot_type": "threebet",
+    "texture": "wet",
+    "spr": "shallow",
+    "root_action_freqs": {
+      "CHECK": 0.6513748822700498,
+      "BET 50.000000": 0.17232448929150582,
+      "BET 150.000000": 0.1763006327847896
+    },
+    "root_missing_combos": 0,
+    "bet_size_response": {
+      "150.0": {
+        "solver_fold": 0.4424022010037887,
+        "solver_call": 0.5575977970087498,
+        "solver_raise": 0,
+        "mdf_predicted_fold": 0.6,
+        "missing_combos": 0,
+        "num_combos": 114
+      },
+      "50.0": {
+        "solver_fold": 0.4033738714210766,
+        "solver_call": 0.1432421454564505,
+        "solver_raise": 0.4533839706517816,
+        "mdf_predicted_fold": 0.33333333333333337,
+        "missing_combos": 0,
+        "num_combos": 114
+      }
+    }
+  },
+  {
+    "key": "wet_deep",
+    "pot_type": "srp",
+    "texture": "wet",
+    "spr": "deep",
+    "root_action_freqs": {
+      "CHECK": 0.9988051905041248,
+      "BET 50.000000": 0.0011761568139195132,
+      "BET 500.000000": 1.8654072115914177e-05
+    },
+    "root_missing_combos": 0,
+    "bet_size_response": {
+      "50.0": {
+        "solver_fold": 0.21972994214940053,
+        "solver_call": 0.526362177999855,
+        "solver_raise": 0.2539078764227678,
+        "mdf_predicted_fold": 0.33333333333333337,
+        "missing_combos": 0,
+        "num_combos": 226
+      },
+      "500.0": {
+        "solver_fold": 0.5386070769143645,
+        "solver_call": 0.46139292570823387,
+        "solver_raise": 0,
+        "mdf_predicted_fold": 0.8333333333333334,
+        "missing_combos": 0,
+        "num_combos": 226
+      }
+    }
+  },
+  {
+    "key": "wet_shallow",
+    "pot_type": "srp",
+    "texture": "wet",
+    "spr": "shallow",
+    "root_action_freqs": {
+      "CHECK": 0.8082429904086862,
+      "BET 50.000000": 0.029940351300857537,
+      "BET 150.000000": 0.1618166601466658
+    },
+    "root_missing_combos": 0,
+    "bet_size_response": {
+      "150.0": {
+        "solver_fold": 0.2866210157782756,
+        "solver_call": 0.7133789865460954,
+        "solver_raise": 0,
+        "mdf_predicted_fold": 0.6,
+        "missing_combos": 0,
+        "num_combos": 226
+      },
+      "50.0": {
+        "solver_fold": 0.2723710610782372,
+        "solver_call": 0.18101699789007877,
+        "solver_raise": 0.546611941914673,
+        "mdf_predicted_fold": 0.33333333333333337,
+        "missing_combos": 0,
+        "num_combos": 226
+      }
+    }
+  }
+]

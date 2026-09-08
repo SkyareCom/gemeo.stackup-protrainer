@@ -2076,6 +2076,40 @@ function mixFrequencies(action, confidence, callLegal = true) {
 // Carlo contra um range mais estreito (ver computeAnalysis); pré-flop, como não existe simulação
 // de equidade real, usa uma leitura mais pessimista do percentil implícito (aproximação, não
 // solver — ver comentário em computeAnalysis sobre isso).
+// GRAU 2 (calibração por solver real): a fórmula pura de MDF (foldFrequency = 1-mdf) SUPERESTIMA
+// a frequência real de fold do vilão — medido contra 24 soluções reais do TexasSolver (CFR,
+// offline, licença AGPL v3, rodado localmente — ver commit e resources/solverReference.json).
+// Pra uma aposta de 50% do pote a fórmula pura previa 33,3% de fold mas os solves resolvem em
+// média ~28,0% (razão 0,84 sobre a previsão teórica); pra apostas maiores o desvio cresce e
+// depois estabiliza perto de ~0,72 (150% pote: previsto 60% / solvado ~40,5%; 300%: previsto 75%
+// / solvado ~53,8%; 500%: previsto 83,3% / solvado ~59,6%). Faz sentido: a MDF pura é um modelo
+// estático de uma street só — o vilão de verdade retém equidade em mãos que "deveriam" foldar
+// pela MDF (redraws, implied odds nas streets seguintes), então continua mais do que o piso
+// teórico. calibratedFoldFrequency interpola linearmente entre os 4 pontos medidos (β = tamanho
+// da aposta em relação ao pote) e, fora desse intervalo, aplica a razão do ponto mais próximo
+// sobre a curva teórica — preserva foldFrequency→0 quando β→0 e extrapola de forma conservadora
+// pra apostas maiores que 5x o pote.
+const FOLD_CALIBRATION_ANCHORS = [
+  { beta: 0.5, fold: 0.2798 },
+  { beta: 1.5, fold: 0.4045 },
+  { beta: 3.0, fold: 0.5381 },
+  { beta: 5.0, fold: 0.5963 },
+];
+function calibratedFoldFrequency(beta) {
+  const anchors = FOLD_CALIBRATION_ANCHORS;
+  const theoretical = (b) => b / (1 + b);
+  const first = anchors[0], last = anchors[anchors.length - 1];
+  if (beta <= first.beta) return theoretical(beta) * (first.fold / theoretical(first.beta));
+  if (beta >= last.beta) return theoretical(beta) * (last.fold / theoretical(last.beta));
+  for (let i = 0; i < anchors.length - 1; i++) {
+    const a = anchors[i], b = anchors[i + 1];
+    if (beta >= a.beta && beta <= b.beta) {
+      const t = (beta - a.beta) / (b.beta - a.beta);
+      return a.fold + t * (b.fold - a.fold);
+    }
+  }
+  return theoretical(beta); // inalcançável, fallback de segurança
+}
 function buildPolicyActionEVs({ spot, finalEquity, potBeforeBB, callChipsBB, raiseSizingBB, computeContinueEquity }) {
   const isPreflop = spot.street === "PRE-FLOP";
   const freeCheckPreflop = isPreflop && ["BB_VS_LIMPERS","HU_BB_VS_LIMP"].includes(spot.bankEntry?.strategicNode);
@@ -2098,7 +2132,8 @@ function buildPolicyActionEVs({ spot, finalEquity, potBeforeBB, callChipsBB, rai
     if (!legal.includes(action)) continue;
     const inc = raiseIncrement[action];
     const mdf = pot / (pot + inc); // fração mínima que o vilão precisa continuar (senão vira alvo de blefe puro)
-    const foldFrequency = Math.max(0.05, Math.min(0.95, 1 - mdf)); // clamps: range real nunca desiste/continua 100%
+    const beta = inc / pot; // tamanho da aposta em relação ao pote — eixo da calibração por solver
+    const foldFrequency = Math.max(0.05, Math.min(0.95, calibratedFoldFrequency(beta))); // clamps: range real nunca desiste/continua 100%
     const continueEquity = computeContinueEquity ? computeContinueEquity(mdf, action) : Math.max(3, equity - (1 - mdf) * 30);
     const continueBranch = (continueEquity / 100) * (pot + inc) - (1 - continueEquity / 100) * inc;
     values[action] = foldFrequency * pot + (1 - foldFrequency) * continueBranch;
